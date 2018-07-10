@@ -48,8 +48,30 @@ assertions easier. Cucumber java, junit, and spring artifacts are included for o
 
 ```
 
+To initialize unit tests to run with Cucumber, one follows the section on using [non-JUnit 
+test runners][] in the docs. This requires inclusion of the following in the POM:
+
+```xml
+		<dependency>
+			<groupId>org.springframework.restdocs</groupId>
+			<artifactId>spring-restdocs-mockmvc</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+```
+
+## The Cucumber Test Runner
+
+
+
+```gherkin
+
+
+```
+
 
 [Cucumber]:https://en.wikipedia.org/wiki/Cucumber_(software)
 [integration testing]:https://thepracticaldeveloper.com/2018/03/31/cucumber-tests-spring-boot-dependency-injection/
+[non-JUnit test runners]: https://docs.spring.io/spring-restdocs/docs/current/reference/html5/#_setting_up_your_tests_without_junit
 
  
