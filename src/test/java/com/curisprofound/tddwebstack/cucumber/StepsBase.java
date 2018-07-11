@@ -67,6 +67,8 @@ public class StepsBase {
         return world.Get(clazz);
     }
 
+    public String Get(String key) { return world.Get(String.class, key);}
+
     public <T> T Add(Class<T> clazz, T target, String key){
         return world.Add(clazz,target,key);
     }

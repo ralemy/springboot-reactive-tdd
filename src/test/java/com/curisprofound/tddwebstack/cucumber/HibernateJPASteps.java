@@ -2,11 +2,14 @@ package com.curisprofound.tddwebstack.cucumber;
 
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
+import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -43,6 +46,31 @@ public class HibernateJPASteps extends StepsBase {
         Optional<Annotation> actual = Arrays.stream(annotations).filter(a -> a.annotationType().getName().contains(arg0)).findFirst();
         assertTrue(actual.isPresent());
 
+    }
+
+    @Then("^The class has a getter for property \"([^\"]*)\"$")
+    public void theClassHasAGetterForProperty(String propertyName) throws Throwable {
+        propertyName = propertyName.substring(0,1).toUpperCase() + propertyName.substring(1);
+        Method method = Class.forName(Get(String.class, "ClassName")).getDeclaredMethod("get" + propertyName);
+        Add(Method.class, method, Get(String.class,"ClassName") + ".get"+propertyName);
+    }
+
+    @And("^The \"([^\"]*)\" field is annotated as \"([^\"]*)\"$")
+    public void theFieldIsAnnotatedAs(String propertyName, String annotationName) throws Throwable {
+        propertyName = propertyName.substring(0,1).toLowerCase() + propertyName.substring(1);
+
+        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
+        f.setAccessible(true);
+
+        Optional<Annotation> annotation = Arrays.stream(f.getAnnotations()).filter(
+                a -> a.annotationType().getName().contains(annotationName)
+        ).findAny();
+
+
+        assertTrue(
+                "Should have an annotation for " + annotationName,
+                annotation.isPresent()
+        );
     }
 }
 
