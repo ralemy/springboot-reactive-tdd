@@ -1,4 +1,4 @@
-# Test Driven Development of Web Services using TDD methodology
+# Test Driven Development of Web Services using Spring Boot
 
 This project explains and demonstrates necessary steps to create Restful 
 web services under the TDD methodology using Spring Boot.
