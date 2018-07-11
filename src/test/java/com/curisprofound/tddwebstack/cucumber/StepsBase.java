@@ -49,6 +49,7 @@ public class StepsBase {
         world.Clear();
         if(shouldCallAfterTest)
             restDocumentation.afterTest();
+        shouldCallAfterTest = false;
     }
 
     protected  <T> List<T> jsonStringToClassArray(String content, Class<T> clazz) throws IOException {
