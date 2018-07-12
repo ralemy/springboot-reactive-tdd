@@ -135,11 +135,133 @@ then it will fail with ```AssertionError``` until we annotate the class as Entit
 If the tests runs while the application is running (for example using Intellij IDEA), one 
 can use the console to verify that in fact no transaction is made to the on-file database.
 
-### Unittesting fields
+### Unit testing private fields
 
 To check for fields, a scenario could asset the existence of a getter and setter
 for that field, and the fact that it is a column, and id class, etc.
 
 ```gherkin
-
+  @HibernateJPA
+  Scenario: Customer should have an id field that is annotated as Id (primary key)
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    Then  The class has a getter for property "Id"
+    And   The "id" field is annotated as "Id"
 ```
+
+for a Customer object that has been created like the following:
+
+```java
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class Customer {
+    @Id
+    private long id;
+    private String name;
+}
+```
+
+The steps need to be declared in a way that the annotations of the private variable
+```id``` can be examined. this is achieved with the following steps:
+
+```java
+@Then("^The class has a getter for property \"([^\"]*)\"$")
+    public void theClassHasAGetterForProperty(String propertyName) throws Throwable {
+        propertyName = propertyName.substring(0,1).toUpperCase() + propertyName.substring(1);
+        Method method = Class.forName(Get(String.class, "ClassName")).getDeclaredMethod("get" + propertyName);
+        Add(Method.class, method, Get(String.class,"ClassName") + ".get"+propertyName);
+    }
+
+    @And("^The \"([^\"]*)\" field is annotated as \"([^\"]*)\"$")
+    public void theFieldIsAnnotatedAs(String propertyName, String annotationName) throws Throwable {
+        propertyName = propertyName.substring(0,1).toLowerCase() + propertyName.substring(1);
+
+        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
+        f.setAccessible(true);
+
+        Optional<Annotation> annotation = Arrays.stream(f.getAnnotations()).filter(
+                a -> a.annotationType().getName().contains(annotationName)
+        ).findAny();
+
+
+        assertTrue(
+                "Should have an annotation for " + annotationName,
+                annotation.isPresent()
+        );
+    }
+```
+Notice the call to ```setAccessible``` method on the declared member.
+
+### unit testing unannotated fields
+
+In the Customer object example above, the ```name``` field is not annotated, which 
+means that it will map to a column with the same name. However, it can't be tested 
+as the Id field because there is no annotation on the field. So, we need to examine 
+the created table in the database directly and ensure that the required field was 
+created.
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should create a column with the name of the field if the field is not annotated
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has an unannotated field called "name"
+    When  Hibernate should create a column "name" in table "Customer"
+```
+
+the Given statement was implemented previously, however we need to assert that the
+field is not annotated:
+
+```java
+    @And("^The class has an unannotated field called \"([^\"]*)\"$")
+    public void theClassHasAnUnannotatedFieldCalled(String propertyName) throws Throwable {
+        propertyName = correctCase(propertyName, "Field");
+        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
+        assertEquals(
+                0,
+                f.getAnnotations().length
+        );
+    }
+
+    private String correctCase(String propertyName, String target) {
+        return
+                (target.equalsIgnoreCase("field") ?
+                        propertyName.substring(0, 1).toLowerCase() :
+                        propertyName.substring(0, 1).toUpperCase()) +
+                        propertyName.substring(1);
+    }
+```
+
+To connect directly to the H2 database, we use inject the JdbcTemplate object to our
+test harness and run a describtive query on the table:
+
+```java
+    @When("^Hibernate should create a column \"([^\"]*)\" in table \"([^\"]*)\"$")
+    public void hibernateShouldCreateAColumnInTable(String arg0, String arg1) throws Throwable {
+
+        String sqlQuery = "show columns from " + arg1.toUpperCase();
+         
+        Optional<String> target =
+                jdbcTemplate.query(sqlQuery, new ColumnMapRowMapper()).stream()
+                        .flatMap(c -> c.entrySet().stream())
+                        .filter(c -> c.getKey().equalsIgnoreCase("field"))
+                        .filter(c -> ((String) c.getValue()).equalsIgnoreCase(arg0))
+                        .map(c -> (String) c.getValue())
+                        .findAny();
+        assertTrue("Should have a column named " + arg0, target.isPresent());
+    }
+```
+
+The result of the above query will be a table like below
+
+|FIELD|     TYPE|          NULL|   KEY|    DEFAULT |
+|-----|---------|--------------|------|------------| 
+|ID|BIGINT(19) |   NO|     PRI|     NULL|
+|NAME|      VARCHAR(255)|  YES|          |  NULL|
+
+```ColumnMapRowMapper()``` will gather the above information in a 
+```List<Map<String,Object>>```. i.e, a list of rows, each row represented as a map,
+where the key is the field name and the value is the field content. the functional 
+lambdas in the above code findout if there is a field by the expected name in the 
+returned result.
+

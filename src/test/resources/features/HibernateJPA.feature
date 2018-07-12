@@ -14,3 +14,8 @@ Feature: As a developer
     Then  The class has a getter for property "Id"
     And   The "id" field is annotated as "Id"
 
+  @HibernateJPA
+  Scenario: Should create a column with the name of the field if the field is not annotated
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has an unannotated field called "name"
+    When  Hibernate should create a column "name" in table "Customer"

@@ -220,3 +220,6 @@ org.h2.message.DbException: Wrong user name or password [28000-197]
 Caused by: org.h2.jdbc.JdbcSQLException: Wrong user name or password [28000-197]
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:357)
 	... 59 more
+2018-07-11 20:18:13 jdbc[83]: exception
+org.h2.jdbc.JdbcSQLException: Syntax error in SQL statement "SELECT [*]"; expected "TOP, LIMIT, DISTINCT, ALL, *, NOT, EXISTS, INTERSECTS"; SQL statement:
+SHOW * from customer [42001-197]
