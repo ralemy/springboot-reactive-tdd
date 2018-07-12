@@ -223,3 +223,6 @@ Caused by: org.h2.jdbc.JdbcSQLException: Wrong user name or password [28000-197]
 2018-07-11 20:18:13 jdbc[83]: exception
 org.h2.jdbc.JdbcSQLException: Syntax error in SQL statement "SELECT [*]"; expected "TOP, LIMIT, DISTINCT, ALL, *, NOT, EXISTS, INTERSECTS"; SQL statement:
 SHOW * from customer [42001-197]
+2018-07-11 23:24:53 jdbc[24]: exception
+org.h2.jdbc.JdbcSQLException: Syntax error in SQL statement "SELECT * FROM INFORMATION_SCHEMA.INDEXES  where table_name = CUSTOMER_PHONE_NUMBERS[*]'"; SQL statement:
+SELECT * FROM INFORMATION_SCHEMA.INDEXES  where table_name = CUSTOMER_PHONE_NUMBERS' [42000-197]

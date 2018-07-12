@@ -13,11 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -66,10 +64,7 @@ public class HibernateJPASteps extends StepsBase {
 
     @And("^The \"([^\"]*)\" field is annotated as \"([^\"]*)\"$")
     public void theFieldIsAnnotatedAs(String propertyName, String annotationName) throws Throwable {
-        propertyName = correctCase(propertyName, "field");
-
-        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
-        f.setAccessible(true);
+        Field f = getFieldByName(propertyName, Get("ClassName"));
 
         Optional<Annotation> annotation = Arrays.stream(f.getAnnotations()).filter(
                 a -> a.annotationType().getName().contains(annotationName)
@@ -112,6 +107,42 @@ public class HibernateJPASteps extends StepsBase {
                         .map(c -> (String) c.getValue())
                         .findAny();
         assertTrue("Should have a column named " + arg0, target.isPresent());
+    }
+
+    @And("^The class has a field called \"([^\"]*)\" that is of type List of Strings$")
+    public void theClassHasAFieldCalledThatIsOfTypeListOfStrings(String propertyName) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        assertTrue("phoneNumbers should be a list instead of " + f.getType().getCanonicalName() ,
+                List.class.isAssignableFrom(f.getType()));
+        Class<?> stringClass = (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
+        assertTrue(
+                "Should be a list of String instead of " + stringClass.getCanonicalName(),
+                String.class.isAssignableFrom(stringClass)
+                );
+    }
+
+    private Field getFieldByName(String propertyName, String className) throws ClassNotFoundException, NoSuchFieldException {
+        propertyName = correctCase(propertyName, "field");
+        Field f = Class.forName(className).getDeclaredField(propertyName);
+        f.setAccessible(true);
+        return f;
+    }
+
+    @When("^The annotations of the \"([^\"]*)\" field are examined$")
+    public void theAnnotationsOfTheFieldAreExamined(String propertyName) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        Add(Object.class, f.getAnnotations(), "FieldAnnotations");
+    }
+
+    @And("^Hibernate creates a \"([^\"]*)\" table in the database$")
+    public void hibernateCreatesATableInTheDatabase(String tableName) throws Throwable {
+        Optional<Map<String, Object>> tableList = jdbcTemplate.query(
+                "select * from information_schema.indexes where table_name = ?",
+                new Object[]{tableName.toUpperCase()},
+                new ColumnMapRowMapper()
+        ).stream().findAny();
+
+        assertTrue("should have a table named " + tableName, tableList.isPresent());
     }
 }
 

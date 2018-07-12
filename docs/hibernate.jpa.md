@@ -265,3 +265,96 @@ where the key is the field name and the value is the field content. the function
 lambdas in the above code findout if there is a field by the expected name in the 
 returned result.
 
+# Relationships
+
+## ElementCollection
+
+```@ElementCollection``` is an annotation used when the collection of objects does not
+have a lifecycle of its own. it is in essence a One-To-Many relationship, but the 'Many' 
+side is created, updated and deleted with the One side.
+
+ElementCollection is studied in this document from three aspects: the collection of simple 
+types, the collection of Embeddable objects, and the collection of Maps.
+
+### ElementCollection of Simple types
+
+We can Imagine the customer to have a list of zero to any number of phone numbers.
+because the count is not limited, this needs to be modeled in a one-to-many relationship.
+however, a single phonenumber doesn't have a meaning without an owner. The test for this
+scenario is written as bellow:
+
+```gherkin
+ @HibernateJPA
+  Scenario: Should have a column as List of elemental objects that maps to an external table
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "phoneNumbers" that is of type List of Strings
+    When  The annotations of the "phoneNumbers" field are examined
+    Then  The "phoneNumbers" field is annotated as "ElementCollection"
+    And   Hibernate creates a "customer_phone_numbers" table in the database
+```
+
+perhaps the only new thing in writing the steps for the above scenario is how to check
+that the generic type of a list field is a string, so we can distinguish between 
+```List<String>``` and ```List<Integer>```.
+
+```java
+    @And("^The class has a field called \"([^\"]*)\" that is of type List of Strings$")
+    public void theClassHasAFieldCalledThatIsOfTypeListOfStrings(String propertyName) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        assertTrue("phoneNumbers should be a list instead of " + f.getType().getCanonicalName() ,
+                List.class.isAssignableFrom(f.getType()));
+        Class<?> stringClass = (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
+        assertTrue(
+                "Should be a list of String instead of " + stringClass.getCanonicalName(),
+                String.class.isAssignableFrom(stringClass)
+                );
+    }
+
+    private Field getFieldByName(String propertyName, String className) throws ClassNotFoundException, NoSuchFieldException {
+        propertyName = correctCase(propertyName, "field");
+        Field f = Class.forName(className).getDeclaredField(propertyName);
+        f.setAccessible(true);
+        return f;
+    }
+
+    @When("^The annotations of the \"([^\"]*)\" field are examined$")
+    public void theAnnotationsOfTheFieldAreExamined(String propertyName) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        Add(Object.class, f.getAnnotations(), "FieldAnnotations");
+    }
+
+    @And("^Hibernate creates a \"([^\"]*)\" table in the database$")
+    public void hibernateCreatesATableInTheDatabase(String tableName) throws Throwable {
+        Optional<Map<String, Object>> tableList = jdbcTemplate.query(
+                "select * from information_schema.indexes where table_name = ?",
+                new Object[]{tableName.toUpperCase()},
+                new ColumnMapRowMapper()
+        ).stream().findAny();
+
+        assertTrue("should have a table named " + tableName, tableList.isPresent());
+    }
+
+```
+For the tests to pass, the Customer object has to be refactored:
+
+```java
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class Customer {
+    @Id
+    private long id;
+    private String name;
+
+    @ElementCollection
+    private List<String> phoneNumbers;
+
+    public List<String> getPhoneNumbers(){
+        if(phoneNumbers == null)
+            phoneNumbers = new ArrayList<>();
+        return phoneNumbers;
+    }
+}
+```
+### ElementCollection of embedded type
