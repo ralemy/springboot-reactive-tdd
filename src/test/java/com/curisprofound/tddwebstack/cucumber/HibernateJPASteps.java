@@ -3,6 +3,8 @@ package com.curisprofound.tddwebstack.cucumber;
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.assertions.AssertOnDb;
 import com.curisprofound.tddwebstack.db.Address;
+import com.curisprofound.tddwebstack.db.Invoice;
+import com.curisprofound.tddwebstack.db.Product;
 import cucumber.api.java.After;
 import cucumber.api.java.en.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,15 +132,6 @@ public class HibernateJPASteps extends StepsBase {
     }
 
 
-    private Class<?> getClassFromKey(String type) {
-        if (type.equalsIgnoreCase("String"))
-            return String.class;
-        if (type.equalsIgnoreCase("Address"))
-            return Address.class;
-        return Object.class;
-    }
-
-
     @Then("^\"([^\"]*)\" is readable$")
     public void isReadable(String arg0) throws Throwable {
         AssertOnClass
@@ -162,5 +155,18 @@ public class HibernateJPASteps extends StepsBase {
                 .Annotation(annotation)
                 .paramHasValue(param,value);
     }
+
+    private Class<?> getClassFromKey(String type) throws Exception {
+        if (type.equalsIgnoreCase("String"))
+            return String.class;
+        if (type.equalsIgnoreCase("Address"))
+            return Address.class;
+        if(type.equalsIgnoreCase("Invoice"))
+            return Invoice.class;
+        if(type.equalsIgnoreCase("Product"))
+            return Product.class;
+        throw new Exception("Unknow type: " + type);
+    }
+
 }
 

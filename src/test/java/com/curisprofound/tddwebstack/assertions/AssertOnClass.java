@@ -36,7 +36,7 @@ public class AssertOnClass {
 
         public ClassAssertions isReadable(String propertyName) {
             String msg = propertyName +
-                    (not ? "is accessible in class" : " is not accessible in class ") +
+                    (not ? " is accessible in class " : " is not accessible in class ") +
                     base.getCanonicalName();
             boolean actual = checkReadable(propertyName);
             if (not)
@@ -51,11 +51,11 @@ public class AssertOnClass {
                 try {
                     base.getDeclaredField(c.trim());
                     if (not)
-                        Assert.fail("Class has a field called " + c);
+                        Assert.fail(base.getCanonicalName() + " has a field called " + c);
                 } catch (NoSuchFieldException e) {
                     if (not)
                         continue;
-                    Assert.fail("Class doesn't have a field called " + c);
+                    Assert.fail(base.getCanonicalName() + " doesn't have a field called " + c);
                 }
             }
             return chain();
@@ -64,7 +64,7 @@ public class AssertOnClass {
         public ClassAssertions hasAnnotations(String... annotations) {
             Optional<String> annotation = checkAnnotations(base.getAnnotations(), not, annotations);
             String msg = base.getCanonicalName() +
-                    (not ? "is annotated with" : " is not annotated with ") +
+                    (not ? " is annotated with " : " is not annotated with ") +
                     annotation.orElse("  ");
             assertFalse(msg, annotation.isPresent());
             return chain();
@@ -163,7 +163,9 @@ public class AssertOnClass {
                 if (not)
                     assertFalse(msg, ref.isAssignableFrom(field.getType()));
                 else
-                    assertTrue(msg, ref.isAssignableFrom(field.getType()));
+                    assertTrue(
+                            msg + " it is of type " + field.getType().getCanonicalName(),
+                            ref.isAssignableFrom(field.getType()));
                 return chain();
             }
 
