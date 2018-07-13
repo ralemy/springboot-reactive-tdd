@@ -8,7 +8,9 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @AllArgsConstructor
@@ -22,9 +24,27 @@ public class Customer {
     @ElementCollection
     private List<String> phoneNumbers;
 
+    @ElementCollection
+    private List<Address> addresses;
+
+    @ElementCollection
+    private Map<String, String> mealPreferences;
+
     public List<String> getPhoneNumbers(){
         if(phoneNumbers == null)
             phoneNumbers = new ArrayList<>();
         return phoneNumbers;
+    }
+
+    public List<Address> getAddresses(){
+        if(addresses == null)
+            addresses = new ArrayList<>();
+        return addresses;
+    }
+
+    public Map<String,String> getMealPreferences(){
+        if(mealPreferences == null)
+            mealPreferences = new HashMap<>();
+        return mealPreferences;
     }
 }

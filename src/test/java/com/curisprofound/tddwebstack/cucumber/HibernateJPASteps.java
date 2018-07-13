@@ -1,11 +1,10 @@
 package com.curisprofound.tddwebstack.cucumber;
 
+import com.curisprofound.tddwebstack.db.Address;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
-import cucumber.api.java.en.And;
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
+import cucumber.api.java.en.*;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,11 +13,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class HibernateJPASteps extends StepsBase {
@@ -51,7 +50,7 @@ public class HibernateJPASteps extends StepsBase {
     public void theAnnotationExistsInTheClassAnnotations(String arg0) throws Throwable {
         Annotation[] annotations = (Annotation[]) Get(Object.class, "ClassAnnotations");
         Optional<Annotation> actual = Arrays.stream(annotations).filter(a -> a.annotationType().getName().contains(arg0)).findFirst();
-        assertTrue(actual.isPresent());
+        assertTrue("NO @" + arg0 + " annotation on class " + Get("ClassName"), actual.isPresent());
 
     }
 
@@ -98,28 +97,12 @@ public class HibernateJPASteps extends StepsBase {
     @When("^Hibernate should create a column \"([^\"]*)\" in table \"([^\"]*)\"$")
     public void hibernateShouldCreateAColumnInTable(String arg0, String arg1) throws Throwable {
 
-        String sqlQuery = "show columns from " + arg1.toUpperCase();
-        Optional<String> target =
-                jdbcTemplate.query(sqlQuery, new ColumnMapRowMapper()).stream()
-                        .flatMap(c -> c.entrySet().stream())
-                        .filter(c -> c.getKey().equalsIgnoreCase("field"))
-                        .filter(c -> ((String) c.getValue()).equalsIgnoreCase(arg0))
-                        .map(c -> (String) c.getValue())
-                        .findAny();
+        Optional<String> target = getColumnNameStream(arg1)
+                .filter(c -> c.equalsIgnoreCase(arg0))
+                .findAny();
         assertTrue("Should have a column named " + arg0, target.isPresent());
     }
 
-    @And("^The class has a field called \"([^\"]*)\" that is of type List of Strings$")
-    public void theClassHasAFieldCalledThatIsOfTypeListOfStrings(String propertyName) throws Throwable {
-        Field f = getFieldByName(propertyName, Get("ClassName"));
-        assertTrue("phoneNumbers should be a list instead of " + f.getType().getCanonicalName() ,
-                List.class.isAssignableFrom(f.getType()));
-        Class<?> stringClass = (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
-        assertTrue(
-                "Should be a list of String instead of " + stringClass.getCanonicalName(),
-                String.class.isAssignableFrom(stringClass)
-                );
-    }
 
     private Field getFieldByName(String propertyName, String className) throws ClassNotFoundException, NoSuchFieldException {
         propertyName = correctCase(propertyName, "field");
@@ -144,5 +127,104 @@ public class HibernateJPASteps extends StepsBase {
 
         assertTrue("should have a table named " + tableName, tableList.isPresent());
     }
+
+    @And("^The class has the following properties: \"([^\"]*)\"$")
+    public void theClassHasTheFollowingProperties(String propertyList) throws Throwable {
+        String[] propertyNames = propertyList.split(",");
+        Class<?> target = Class.forName(Get("ClassName"));
+        for (String c : propertyNames) {
+            try {
+                target.getDeclaredField(c.trim());
+            } catch (NoSuchFieldException e) {
+                Assert.fail("Class doesn't have a field called " + c);
+            }
+        }
+    }
+
+    @And("^The class has a field called \"([^\"]*)\" that is of type List of \"([^\"]*)\"$")
+    public void theClassHasAFieldCalledThatIsOfTypeListOf(String propertyName, String type) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        Class<?> target = getClassFromKey(type);
+        assertTrue(propertyName + " should be a list instead of " + f.getType().getCanonicalName(),
+                List.class.isAssignableFrom(f.getType()));
+        Class<?> actualClass = getFieldGenericType(f, 0);
+        assertTrue(
+                "Should be a list of " + type + " instead of " + actualClass.getCanonicalName(),
+                target.isAssignableFrom(actualClass)
+        );
+    }
+
+
+    @And("^The class has a field called \"([^\"]*)\" that is of type Map of \"([^\"]*)\" and \"([^\"]*)\"$")
+    public void theClassHasAFieldCalledThatIsOfTypeMapOfAnd(String propertyName, String type1, String type2) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        assertTrue(propertyName + " should be a Map instead of " + f.getType().getCanonicalName(),
+                Map.class.isAssignableFrom(f.getType()));
+        Class<?> actualClass = getFieldGenericType(f, 0);
+        assertTrue(
+                "First Type Should be " + type1 + " instead of " + actualClass.getCanonicalName(),
+                getClassFromKey(type1).isAssignableFrom(actualClass)
+        );
+        actualClass = getFieldGenericType(f, 1);
+        assertTrue(
+                "Second Type Should be " + type2 + " instead of " + actualClass.getCanonicalName(),
+                getClassFromKey(type2).isAssignableFrom(actualClass)
+        );
+    }
+
+    private Class<?> getFieldGenericType(Field f, int i) {
+        return (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[i];
+    }
+
+    private Class<?> getClassFromKey(String type) {
+        if (type.equalsIgnoreCase("String"))
+            return String.class;
+        if (type.equalsIgnoreCase("Address"))
+            return Address.class;
+        return Object.class;
+    }
+
+    @Then("^the \"([^\"]*)\" table has a foreignKey to \"([^\"]*)\" table$")
+    public void theTableHasAForeignKeyToTable(String source, String target) throws Throwable {
+        Optional<Object> foreignKey = getForeignKey(source,target);
+
+        assertTrue(
+                source + " should have a foreign key to " + target,
+                foreignKey.isPresent()
+        );
+    }
+
+
+    @But("^The \"([^\"]*)\" table has no link to \"([^\"]*)\" table$")
+    public void theTableHasNoLinkToTable(String source, String target) throws Throwable {
+        Optional<Object> foreignKey = getForeignKey(source,target);
+
+        assertFalse(
+                source + " should not have a foreign key to " + target,
+                foreignKey.isPresent()
+        );
+    }
+
+    private Optional<Object> getForeignKey(String source, String target) {
+        return jdbcTemplate.query(
+                "SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS where table_name = ?",
+                new Object[]{source.toUpperCase()},
+                new ColumnMapRowMapper()
+        ).stream()
+                .filter(c -> c.getOrDefault("CONSTRAINT_TYPE", "").equals("REFERENTIAL"))
+                .filter(c -> ((String) c.getOrDefault("SQL", "")).contains(target.toUpperCase()))
+                .map(c -> c.getOrDefault("UniqueIndexName", ""))
+                .findAny();
+    }
+
+    private Stream<String> getColumnNameStream(String tableName) {
+        return jdbcTemplate.query(
+                "show columns from " + tableName.toUpperCase(), new ColumnMapRowMapper())
+                .stream()
+                .flatMap(c -> c.entrySet().stream())
+                .filter(c -> c.getKey().equalsIgnoreCase("field"))
+                .map(c -> (String) c.getValue());
+    }
+
 }
 

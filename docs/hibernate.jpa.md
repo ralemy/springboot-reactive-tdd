@@ -358,3 +358,215 @@ public class Customer {
 }
 ```
 ### ElementCollection of embedded type
+
+The other use case for ElementCollection is to have a property with complex type, a typical example of which is 
+the Address (which consists of address lines, city, country, postal code, etc.). A customer may have multiple 
+addresses, but an address by itself doesn't have a lifecycle. 
+
+First, a test scenario for the existance and correct configuration of the Address object.
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have a class named Address which is embeddable
+    Given There exists a class named "Address" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "addressLine1, addressLine2, city, postalCode"
+    When  The annotations of the class are examined
+    Then  the "Embeddable" annotation exists in the class annotations
+```
+
+The only new step is to check existence of a list of properties on a class
+
+```java
+    @And("^The class has the following properties: \"([^\"]*)\"$")
+    public void theClassHasTheFollowingProperties(String propertyList) throws Throwable {
+        String[] propertyNames= propertyList.split(",");
+        Class<?> target = Class.forName(Get("ClassName"));
+        for (String c : propertyNames) {
+            try {
+                target.getDeclaredField(c.trim());
+            } catch (NoSuchFieldException e) {
+                Assert.fail("Class doesn't have a field called " + c);
+            }
+        }
+    }
+```
+
+Now, a test scenario for the Customer to have a List of addresses annotated 
+with ```ElementCollection```.
+
+```gherkin
+@HibernateJPA
+  Scenario: Should have a collection of addresses in Customer, which should map to a one-to-many relationship
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "addresses" that is of type List of "Address"
+    Then  The "addresses" field is annotated as "ElementCollection"
+    And   Hibernate creates a "customer_addresses" table in the database
+```
+
+All of the above steps have previously been implemented. 
+
+### ElementCollection of Map types
+
+If the property that is being collected is a Map with keys and values, the 
+general usage of the annotation remains the same, and hibernate will create a table
+with three columns for it: one for the foreign key, one for the map key, and 
+one (or more if the map value is embeddable) for the map value.
+
+Here is a test:
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have a collection of meal preferences in Customer, which should map to a one-to-many relationship
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "mealPreferences" that is of type Map of "String" and "String"
+    Then  The "mealPreferences" field is annotated as "ElementCollection"
+    And   Hibernate creates a "customer_meal_preferences" table in the database
+```
+
+Checking the generic types of Map is the same as List:
+
+```java
+    @And("^The class has a field called \"([^\"]*)\" that is of type Map of \"([^\"]*)\" and \"([^\"]*)\"$")
+    public void theClassHasAFieldCalledThatIsOfTypeMapOfAnd(String propertyName, String type1, String type2) throws Throwable {
+        Field f = getFieldByName(propertyName, Get("ClassName"));
+        assertTrue(propertyName + " should be a Map instead of " + f.getType().getCanonicalName(),
+                Map.class.isAssignableFrom(f.getType()));
+        Class<?> actualClass = getFieldGenericType(f,0);
+        assertTrue(
+                "First Type Should be " + type1 + " instead of " + actualClass.getCanonicalName(),
+                getClassFromKey(type1).isAssignableFrom(actualClass)
+        );
+        actualClass = getFieldGenericType(f,1);
+        assertTrue(
+                "Second Type Should be " + type2 + " instead of " + actualClass.getCanonicalName(),
+                getClassFromKey(type2).isAssignableFrom(actualClass)
+        );
+    }
+
+    private Class<?> getFieldGenericType(Field f, int i){
+        return (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[i];
+    }
+
+    private Class<?> getClassFromKey(String type) {
+        if(type.equalsIgnoreCase("String"))
+            return String.class;
+        if(type.equalsIgnoreCase("Address"))
+            return Address.class;
+        return Object.class;
+    }
+```
+
+## One-to-One relationships
+
+One-to-One relationships are usually employed when the entity has a rare optional complex property.
+
+For example, imagine that 5% of customers are retailers, and retailers have a set of information,
+such as national business number, store count, warehouse capacity, etc. 
+
+Normally, there would be a column on the customers table for each of the above. 
+however, it is wasteful in this situation because 95% of the time the columns will all
+be null as only 5% of customers are retailers.
+
+At times like this, a One-to-One relationship is created to move the 
+retailer rows to their own table.
+
+### Unidirectional One-to-one relationships
+
+Unidirectional relationships are those that one can get to the child from parent but not 
+to parent from child. these are used when the child table is an extension that doesn't have any
+meaning by itself. Imagine that for addresses that show a high rise building, we have
+an extension that shows the floor, suite, and buzzer number. 
+
+First, the test to ensure such class exists and has correct properties:
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have a class named HighRiseAddressExtension which has its own table
+    Given There exists a class named "HighRiseAddressExtension" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "suite, floor, buzzerCode"
+    When  The annotations of the class are examined
+    Then  the "Entity" annotation exists in the class annotations
+```
+
+Nothing new here. the test will fail and will pass when we have the class:
+
+```java
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class HighRiseAddressExtension {
+    @Id
+    @GeneratedValue
+    private long id;
+    private String suite;
+    private String floor;
+    private String buzzerCode;
+}
+```
+
+Now, the test that would ensure it has a unidirectional one-to-one relationship with
+Address:
+
+```gherkin
+  @HibernateJPA
+  Scenario: the Address class should have a unidirectional one to one relationship with HighRiseAddressExtension
+    Given There exists a class named "Address" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "highRiseExtension"
+    And   The "highRiseExtension" field is annotated as "OneToOne"
+    When  Hibernate creates a "high_rise_address_extension" table in the database
+    Then  the "customer_addresses" table has a foreignKey to "high_rise_address_extension" table
+    But   The "high_rise_address_extension" table has no link to "customer_addresses" table
+```
+
+Two new steps need to check the foreign keys between two tables to ensure that the
+relationship is unidirectional. here is how to implement them:
+
+```java
+@Then("^the \"([^\"]*)\" table has a foreignKey to \"([^\"]*)\" table$")
+    public void theTableHasAForeignKeyToTable(String source, String target) throws Throwable {
+        Optional<Object> foreignKey = getForeignKey(source,target);
+
+        assertTrue(
+                source + " should have a foreign key to " + target,
+                foreignKey.isPresent()
+        );
+    }
+
+
+    @But("^The \"([^\"]*)\" table has no link to \"([^\"]*)\" table$")
+    public void theTableHasNoLinkToTable(String source, String target) throws Throwable {
+        Optional<Object> foreignKey = getForeignKey(source,target);
+
+        assertFalse(
+                source + " should not have a foreign key to " + target,
+                foreignKey.isPresent()
+        );
+    }
+
+    private Optional<Object> getForeignKey(String source, String target) {
+        return jdbcTemplate.query(
+                "SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS where table_name = ?",
+                new Object[]{source.toUpperCase()},
+                new ColumnMapRowMapper()
+        ).stream()
+                .filter(c -> c.getOrDefault("CONSTRAINT_TYPE", "").equals("REFERENTIAL"))
+                .filter(c -> ((String) c.getOrDefault("SQL", "")).contains(target.toUpperCase()))
+                .map(c -> c.getOrDefault("UniqueIndexName", ""))
+                .findAny();
+    }
+```
+
+## Bidirectional One-to-One relationship
+
+If the child entity has a link to refer back to the parent then the relationship will
+be bilateral. For example, The customer may have a Shipping Contact which has its own
+properties from whom we could get the customer they represent. 
+
+As ususal, there needs to be a test to ensure the existance of the ShippingContact class
+and its correct annotation.
+
+
+```gherkin
+
+```
