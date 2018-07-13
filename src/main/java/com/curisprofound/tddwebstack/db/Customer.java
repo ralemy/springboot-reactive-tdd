@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +31,9 @@ public class Customer {
     @OneToOne
     private ShippingContact shippingContact;
 
+    @OneToMany
+    private  List<Invoice> invoices;
+
     public List<String> getPhoneNumbers(){
         if(phoneNumbers == null)
             phoneNumbers = new ArrayList<>();
@@ -50,5 +50,11 @@ public class Customer {
         if(mealPreferences == null)
             mealPreferences = new HashMap<>();
         return mealPreferences;
+    }
+
+    public List<Invoice> getInvoices(){
+        if(invoices == null)
+            invoices = new ArrayList<>();
+        return invoices;
     }
 }

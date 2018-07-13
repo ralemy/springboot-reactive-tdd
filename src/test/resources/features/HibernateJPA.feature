@@ -83,3 +83,39 @@ Feature: I need an ORM to deal with data persistence
     Then  "publicField" is readable
     And   "getterField" is readable
     And   "privateField" is not readable
+
+  @HibernateJPA
+  Scenario: Should have an Invoice class annotated as an entity
+    Given There exists a class named "Invoice" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "date, place, customer"
+    And   The "customer" field is annotated as "ManyToOne"
+    Then  the "Entity" annotation exists in the class annotations
+
+  @HibernateJPA
+  Scenario: the Customer class should have a  One to Many relationship with Invoice
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "invoices" that is of type List of "Invoice"
+    And   The "invoices" field is annotated as "OneToMany"
+    And   the "invoice" table has a foreignKey to "Customer" table
+    But   The "customer" table has no link to "invoice" table
+
+  @HibernateJPA
+  Scenario: Should have an Product class annotated as an entity
+    Given There exists a class named "Product" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "name, number"
+    Then  the "Entity" annotation exists in the class annotations
+
+  @HibernateJPA
+  Scenario: the Invoice class should have a  Many to Many relationship with Product
+    Given There exists a class named "Invoice" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "products" that is of type List of "Product"
+    And   The "products" field is annotated as "ManyToMany"
+    Then  Hibernate creates a "invoice_products" table in the database
+    And   the "invoice_products" table has a foreignKey to "invoice" table
+    And   the "invoice_products" table has a foreignKey to "product" table
+
+  @HibernateJPA
+  Scenario: Should have an Product class annotated as an entity
+    Given There exists a class named "Product" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "invoices" that is of type List of "Invoice"
+    Then   The "invoices" field is annotated as "ManyToMany" with parameter "mappedBy" set to "products"

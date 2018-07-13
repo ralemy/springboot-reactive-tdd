@@ -679,3 +679,86 @@ way of ```ElementCollection``` as described above. However, for bidirectional re
 
 The more generic way is to use the ```@OneToMany``` annotation, and implement the reverse relationship with ```@ManyToOne```
 
+In essence, many-to-one relationships can be uni-directional, or bidirectional and can use a Join table.
+
+let's assume we have an Invoice Object and one customer can have many invoices, and there is a bidirectional relationship 
+between the two. 
+
+The first step is the tests for the Invoice Object:
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have an Invoice class annotated as an entity
+    Given There exists a class named "Invoice" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "date, place, customer"
+    And   The "customer" field is annotated as "ManyToOne"
+    Then  the "Entity" annotation exists in the class annotations
+```
+
+No steps need to be implemented. Just implement the class and we can continue with testing that the customer has 
+an Invoice set.
+
+```gherkin
+  @HibernateJPA
+  Scenario: the Address class should have a unidirectional one to one relationship with HighRiseAddressExtension
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "invoices" that is of type List of "Invoice"
+    And   The "invoices" field is annotated as "OneToMany"
+    And   the "invoice" table has a foreignKey to "Customer" table
+    But   The "customer" table has no link to "invoice" table
+```
+
+Nothing new here either. 
+
+
+# Many-to-Many Relationships
+
+Many-to-many relationships are used when the two objects have completely independent lifecycles. For example, the Invoice 
+is an object that may contain one or more products, and one product may be in one or more invoices. removing an Invoice will
+not remove the product, just the information that this product was once part of this invoice.
+
+As usual, we first test for our Product object.
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have an Product class annotated as an entity
+    Given There exists a class named "Product" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "name, number"
+    Then  the "Entity" annotation exists in the class annotations
+```
+
+Once the test passes, the next test would be to see that the Invoice has a many to many relationship with the product
+
+```gherkin
+  @HibernateJPA
+  Scenario: the Invoice class should have a  Many to Many relationship with Product
+    Given There exists a class named "Invoice" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "products" that is of type List of "Product"
+    And   The "products" field is annotated as "ManyToMany"
+    Then  Hibernate creates a "invoice_products" table in the database
+    And   the "invoice_products" table has a foreignKey to "invoice" table
+    And   the "invoice_products" table has a foreignKey to "product" table
+```
+
+No new steps need to be implemented. we just need to add products field to Invoice class to pass step 2 and annotate it
+with ```@ManyToMany``` to pass step 3. 
+
+## Bidirectional Many-to-Many relationship
+
+While the many-to-many relationship is always bidirectional in the database, Java objects require notations to become
+bidirectional. for example, if it is requried to know to which invoices a product has been assigned, we need to have a
+field in the product class annotated as ```@ManyToMany```
+
+However, at this point hibernate will create a ```invoice_products``` and a ```product_invoices``` join table which may
+be useful if each direction needed to be separate, but in most cases we only need one join table, so we have to add
+a parameter to the annotation: ```@ManyToMany(mappedBy="products")``` for the invoices field in the product table. 
+
+This will result in only one join table being created. 
+
+```gherkin
+  @HibernateJPA
+  Scenario: Should have an Product class annotated as an entity
+    Given There exists a class named "Product" in "com.curisprofound.tddwebstack.db" package
+    And   The class has a field called "invoices" that is of type List of "Invoice"
+    Then   The "invoices" field is annotated as "ManyToMany"
+```

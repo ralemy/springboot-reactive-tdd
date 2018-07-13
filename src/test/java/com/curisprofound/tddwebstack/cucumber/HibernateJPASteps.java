@@ -3,23 +3,12 @@ package com.curisprofound.tddwebstack.cucumber;
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.assertions.AssertOnDb;
 import com.curisprofound.tddwebstack.db.Address;
-import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.en.*;
-import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
-import java.util.stream.Stream;
-
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.*;
 
 public class HibernateJPASteps extends StepsBase {
 
@@ -68,7 +57,8 @@ public class HibernateJPASteps extends StepsBase {
         AssertOnClass
                 .For(Get("ClassName"))
                 .Field(propertyName)
-                .hasNoAnnotations();
+                .Not()
+                .hasAnnotations();
     }
 
 
@@ -159,7 +149,17 @@ public class HibernateJPASteps extends StepsBase {
     public void isNotReadable(String arg0) throws Throwable {
         AssertOnClass
                 .For(Get("ClassName"))
-                .isNotReadable(arg0);
+                .Not()
+                .isReadable(arg0);
+    }
+
+    @Then("^The \"([^\"]*)\" field is annotated as \"([^\"]*)\" with parameter \"([^\"]*)\" set to \"([^\"]*)\"$")
+    public void theFieldIsAnnotatedAsWithParameterSetTo(String field, String annotation, String param, String value) throws Throwable {
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(field)
+                .Annotation(annotation)
+                .paramHasValue(param,value);
     }
 }
 
