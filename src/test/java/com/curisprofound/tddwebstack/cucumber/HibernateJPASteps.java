@@ -125,7 +125,8 @@ public class HibernateJPASteps extends StepsBase {
         AssertOnDb
                 .ForH2(jdbcTemplate)
                 .Table(source)
-                .hasNoForeignKeysTo(target);
+                .Not()
+                .hasForeignKeyTo(target);
     }
 
 
