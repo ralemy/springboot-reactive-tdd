@@ -671,4 +671,11 @@ two entities:
 
 All test steps have been implemented previously.
 
+# One-to-Many Relationships
+
+Most of the time, specially when the relationship is unidirectional, one-to-many relationships can be implemented by
+way of ```ElementCollection``` as described above. However, for bidirectional relationships, Hibernate has a 
+```@Parent``` annotation that is not part of JPA, so it only works with Hibernate. 
+
+The more generic way is to use the ```@OneToMany``` annotation, and implement the reverse relationship with ```@ManyToOne```
 
