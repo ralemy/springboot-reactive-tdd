@@ -4,7 +4,6 @@ Feature: I need an ORM to deal with data persistence
   @HibernateJPA
   Scenario: Should have a class named Customer annotated with @Entity
     Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
-    When  The annotations of the class are examined
     Then  the "Entity" annotation exists in the class annotations
 
   @HibernateJPA
@@ -23,7 +22,6 @@ Feature: I need an ORM to deal with data persistence
   Scenario: Should have a column as List of elemental objects that maps to an external table
     Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
     And   The class has a field called "phoneNumbers" that is of type List of "String"
-    When  The annotations of the "phoneNumbers" field are examined
     Then  The "phoneNumbers" field is annotated as "ElementCollection"
     And   Hibernate creates a "customer_phone_numbers" table in the database
 
@@ -32,7 +30,6 @@ Feature: I need an ORM to deal with data persistence
   Scenario: Should have a class named Address which is embeddable
     Given There exists a class named "Address" in "com.curisprofound.tddwebstack.db" package
     And   The class has the following properties: "addressLine1, addressLine2, city, postalCode"
-    When  The annotations of the class are examined
     Then  the "Embeddable" annotation exists in the class annotations
 
   @HibernateJPA
@@ -53,7 +50,6 @@ Feature: I need an ORM to deal with data persistence
   Scenario: Should have a class named HighRiseAddressExtension which has its own table
     Given There exists a class named "HighRiseAddressExtension" in "com.curisprofound.tddwebstack.db" package
     And   The class has the following properties: "suite, floor, buzzerCode"
-    When  The annotations of the class are examined
     Then  the "Entity" annotation exists in the class annotations
 
   @HibernateJPA
@@ -69,5 +65,21 @@ Feature: I need an ORM to deal with data persistence
   Scenario: Should have a ShippingContact class annotated as an entity
     Given There exists a class named "ShippingContact" in "com.curisprofound.tddwebstack.db" package
     And   The class has the following properties: "name, phoneNumber, customer"
-    When  The annotations of the class are examined
     Then  the "Entity" annotation exists in the class annotations
+
+  @HibernateJPA
+  Scenario: the Address class should have a unidirectional one to one relationship with HighRiseAddressExtension
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "shippingContact"
+    And   The "shippingContact" field is annotated as "OneToOne"
+    Then  the "customer" table has a foreignKey to "Shipping_Contact" table
+    And  the "shipping_contact" table has a foreignKey to "Customer" table
+
+
+  @HibernateJPA
+  Scenario: the test system should be able to say if a class member is accessible
+    Given There exists a class named "TestMe" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "privateField, publicField, getterField"
+    Then  "publicField" is readable
+    And   "getterField" is readable
+    And   "privateField" is not readable

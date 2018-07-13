@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,9 @@ public class Customer {
 
     @ElementCollection
     private Map<String, String> mealPreferences;
+
+    @OneToOne
+    private ShippingContact shippingContact;
 
     public List<String> getPhoneNumbers(){
         if(phoneNumbers == null)

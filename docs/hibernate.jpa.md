@@ -2,7 +2,7 @@
 
 Data persistence is a very common requirement in every application. One of the best practices
 in implementation of data persistence is the use of ORM, in which a framework will usher data
-between objects and database tables automatically. One of the most popular ORM frameworks is
+between objects and database tables automatically and one of the most popular ORM frameworks is
 Hibernate, which will be used in this step. 
 
 The Database behind the ORM framework can be any engine, in this example we use H2. H2 is an
@@ -70,6 +70,19 @@ spring.datasource.password=sa
 spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
 ```
 
+
+### Fixture for inspecting classes
+
+As we write our unit tests, many of them will depend on reflection to see if a class has a method, an annotation, 
+a field, etc. To make this easier there is a helper class called ```AssertOnClass``` in 
+```src/test/java/com/.../assertions``` the methods on this class allow chaining of assertions to support the tests
+we will encounter later in this chapter.
+
+Another frequent requirement is to manually examine the underlying database and check if a table, a column, a foriegn key,
+etc. exist and are created correctly. to facilitate that, the ```AssertOnDB``` class is provided in the same location
+as the ```AssertOnClass```.
+
+
 ### Creating Hibernate models
 
 In Spring boot, a POJO annotated with ```@Entity``` will be considered an ORM model, and
@@ -85,7 +98,6 @@ Feature: As a developer
   @HibernateJPA
   Scenario: Should have a class named Customer annotated with @Entity
     Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
-    When  The annotations of the class are examined
     Then  the "Entity" annotation exists in the class annotations
 ```
 
@@ -109,22 +121,12 @@ public class HibernateJPASteps extends StepsBase {
 
     }
 
-    @When("^The annotations of the class are examined$")
-    public void theAnnotationsOfTheClassAreExamined() throws Throwable {
-        Annotation[] annotations = Class.forName(Get(String.class, "ClassName"))
-                .getAnnotations();
-        Add(Object.class, annotations, "ClassAnnotations");
-    }
 
     @Then("^the \"([^\"]*)\" annotation exists in the class annotations$")
     public void theAnnotationExistsInTheClassAnnotations(String arg0) throws Throwable {
-        Annotation[] annotations = (Annotation[])Get(Object.class, "ClassAnnotations");
-        Optional<Annotation> actual = Arrays.stream(annotations)
-            .filter(a -> a.annotationType()
-                            .getName()
-                            .contains(arg0))
-            .findFirst();
-        assertTrue(actual.isPresent());
+        AssertOnClass
+                .For(Get("ClassName"))
+                .hasAnnotations(arg0);
     }
 }
 ```
@@ -133,7 +135,34 @@ Test will fail with ```ClassNotFound``` exception until we actually create the c
 then it will fail with ```AssertionError``` until we annotate the class as Entity.
 
 If the tests runs while the application is running (for example using Intellij IDEA), one 
-can use the console to verify that in fact no transaction is made to the on-file database.
+can use the h2 console to verify that in fact no transaction is made to the on-file database.
+
+The AssertOnClass object uses reflection to see if an particular annotation is present in a class:
+
+```java
+    public ClassAssertions hasAnnotations(String... annotations){
+        Optional<String> annotation = checkAnnotations(base.getAnnotations(), annotations);
+        assertFalse(
+                base.getCanonicalName() + " is not annotated with " + annotation.orElseGet(() -> ""),
+                annotation.isPresent()
+        );
+        return this;
+    }
+
+    static Optional<String> checkAnnotations(Annotation[] actual, String... expected){
+        for(String annotation : expected)
+            if(!hasAnnotation(actual, annotation))
+                return Optional.of(annotation);
+        return Optional.empty();
+    }
+
+    private static boolean hasAnnotation(Annotation[] actual, String annotation) {
+        return Arrays.stream(actual).anyMatch(
+                a -> a.annotationType().getName().contains(annotation)
+        );
+    }
+```
+
 
 ### Unit testing private fields
 
@@ -166,32 +195,61 @@ The steps need to be declared in a way that the annotations of the private varia
 ```id``` can be examined. this is achieved with the following steps:
 
 ```java
-@Then("^The class has a getter for property \"([^\"]*)\"$")
+    @Then("^The class has a getter for property \"([^\"]*)\"$")
     public void theClassHasAGetterForProperty(String propertyName) throws Throwable {
-        propertyName = propertyName.substring(0,1).toUpperCase() + propertyName.substring(1);
-        Method method = Class.forName(Get(String.class, "ClassName")).getDeclaredMethod("get" + propertyName);
-        Add(Method.class, method, Get(String.class,"ClassName") + ".get"+propertyName);
+        AssertOnClass
+                .For(Get("ClassName"))
+                .isReadable(propertyName);
     }
 
     @And("^The \"([^\"]*)\" field is annotated as \"([^\"]*)\"$")
     public void theFieldIsAnnotatedAs(String propertyName, String annotationName) throws Throwable {
-        propertyName = propertyName.substring(0,1).toLowerCase() + propertyName.substring(1);
-
-        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
-        f.setAccessible(true);
-
-        Optional<Annotation> annotation = Arrays.stream(f.getAnnotations()).filter(
-                a -> a.annotationType().getName().contains(annotationName)
-        ).findAny();
-
-
-        assertTrue(
-                "Should have an annotation for " + annotationName,
-                annotation.isPresent()
-        );
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(propertyName)
+                .hasAnnotations(annotationName);
     }
 ```
-Notice the call to ```setAccessible``` method on the declared member.
+
+These are the methods in ```AssertOnClass``` for checking if a field is readable and to get annotations for a field.
+
+```java
+        public boolean isReadable(String propertyName){
+            try {
+                base.getDeclaredMethod("get" + correctCase(propertyName, "method"));
+            } catch (NoSuchMethodException e) {
+                try {
+                    base.getDeclaredField(correctCase(propertyName, "field")).get(base.newInstance());
+                } catch (Exception e1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public FieldAsserstions hasAnnotations(String... annotations){
+            Optional<String> annotation = checkAnnotations(field.getAnnotations(), annotations);
+            assertFalse(
+                    field.getName() + " is not annotated with " + annotation.orElseGet(() -> ""),
+                    annotation.isPresent()
+            );
+            return this;
+        }
+```
+
+AssertOnClass uses reflection to check if a field is readable. Here we first look for a getter, and if it
+doesn't exist, we try to see if the field can be accessed from a new instance.
+
+to see how it works a quick test can be written:
+
+```gherkin
+  @HibernateJPA
+  Scenario: the test system should be able to say if a class member is accessible
+    Given There exists a class named "TestMe" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "privateField, publicField, getterField"
+    Then  "publicField" is readable
+    And   "getterField" is readable
+    And   "privateField" is not readable
+```
 
 ### unit testing unannotated fields
 
@@ -215,42 +273,71 @@ field is not annotated:
 ```java
     @And("^The class has an unannotated field called \"([^\"]*)\"$")
     public void theClassHasAnUnannotatedFieldCalled(String propertyName) throws Throwable {
-        propertyName = correctCase(propertyName, "Field");
-        Field f = Class.forName(Get("ClassName")).getDeclaredField(propertyName);
-        assertEquals(
-                0,
-                f.getAnnotations().length
-        );
-    }
-
-    private String correctCase(String propertyName, String target) {
-        return
-                (target.equalsIgnoreCase("field") ?
-                        propertyName.substring(0, 1).toLowerCase() :
-                        propertyName.substring(0, 1).toUpperCase()) +
-                        propertyName.substring(1);
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(propertyName)
+                .hasNoAnnotations();
     }
 ```
 
-To connect directly to the H2 database, we use inject the JdbcTemplate object to our
-test harness and run a describtive query on the table:
+To connect directly to the H2 database, we inject the JdbcTemplate object to our
+test harness and use AssertOnDb to examine it:
 
 ```java
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+
     @When("^Hibernate should create a column \"([^\"]*)\" in table \"([^\"]*)\"$")
     public void hibernateShouldCreateAColumnInTable(String arg0, String arg1) throws Throwable {
 
-        String sqlQuery = "show columns from " + arg1.toUpperCase();
-         
-        Optional<String> target =
-                jdbcTemplate.query(sqlQuery, new ColumnMapRowMapper()).stream()
-                        .flatMap(c -> c.entrySet().stream())
-                        .filter(c -> c.getKey().equalsIgnoreCase("field"))
-                        .filter(c -> ((String) c.getValue()).equalsIgnoreCase(arg0))
-                        .map(c -> (String) c.getValue())
-                        .findAny();
-        assertTrue("Should have a column named " + arg0, target.isPresent());
+        AssertOnDb
+                .ForH2(jdbcTemplate)
+                .Table(arg1)
+                .hasColumnsByName(arg0);
     }
 ```
+
+AssertOnDB looks through column names in H2 by the ```show columns``` statement. It will show the first missing 
+column name:
+
+```java
+
+            public TableAssertions hasColumnsByName(String... names){
+                Optional<String> name = checkColumnsByName(names);
+                assertFalse(
+                        tableName + " has no column by name of " + name.orElse(""),
+                        name.isPresent()
+                );
+                return this;
+            }
+
+
+            private Optional<String> checkColumnsByName(String... names){
+                List<Map<String, Object>> columnNames = getColumns();
+                for(String name : names)
+                    if(!hasColumnByName(columnNames, name))
+                        return Optional.of(name);
+                return Optional.empty();
+            }
+
+            private boolean hasColumnByName(List<Map<String, Object>> columnNames, String name) {
+                return columnNames
+                        .stream()
+                        .anyMatch(c-> ((String) c.getOrDefault("FIELD", ""))
+                                .equalsIgnoreCase(name));
+            }
+
+
+            private List<Map<String, Object>> getColumns(){
+                return db.query(
+                        "show columns from " + tableName.toUpperCase(), new ColumnMapRowMapper());
+            }
+
+```
+
+
 
 The result of the above query will be a table like below
 
@@ -288,7 +375,6 @@ scenario is written as bellow:
   Scenario: Should have a column as List of elemental objects that maps to an external table
     Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
     And   The class has a field called "phoneNumbers" that is of type List of Strings
-    When  The annotations of the "phoneNumbers" field are examined
     Then  The "phoneNumbers" field is annotated as "ElementCollection"
     And   Hibernate creates a "customer_phone_numbers" table in the database
 ```
@@ -298,43 +384,41 @@ that the generic type of a list field is a string, so we can distinguish between
 ```List<String>``` and ```List<Integer>```.
 
 ```java
-    @And("^The class has a field called \"([^\"]*)\" that is of type List of Strings$")
-    public void theClassHasAFieldCalledThatIsOfTypeListOfStrings(String propertyName) throws Throwable {
-        Field f = getFieldByName(propertyName, Get("ClassName"));
-        assertTrue("phoneNumbers should be a list instead of " + f.getType().getCanonicalName() ,
-                List.class.isAssignableFrom(f.getType()));
-        Class<?> stringClass = (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
-        assertTrue(
-                "Should be a list of String instead of " + stringClass.getCanonicalName(),
-                String.class.isAssignableFrom(stringClass)
-                );
+    @And("^The class has a field called \"([^\"]*)\" that is of type List of \"([^\"]*)\"$")
+    public void theClassHasAFieldCalledThatIsOfTypeListOf(String propertyName, String type) throws Throwable {
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(propertyName)
+                .isOfType(List.class)
+                .genericArgIsOfType(0, getClassFromKey(type));
     }
 
-    private Field getFieldByName(String propertyName, String className) throws ClassNotFoundException, NoSuchFieldException {
-        propertyName = correctCase(propertyName, "field");
-        Field f = Class.forName(className).getDeclaredField(propertyName);
-        f.setAccessible(true);
-        return f;
-    }
-
-    @When("^The annotations of the \"([^\"]*)\" field are examined$")
-    public void theAnnotationsOfTheFieldAreExamined(String propertyName) throws Throwable {
-        Field f = getFieldByName(propertyName, Get("ClassName"));
-        Add(Object.class, f.getAnnotations(), "FieldAnnotations");
-    }
 
     @And("^Hibernate creates a \"([^\"]*)\" table in the database$")
     public void hibernateCreatesATableInTheDatabase(String tableName) throws Throwable {
-        Optional<Map<String, Object>> tableList = jdbcTemplate.query(
-                "select * from information_schema.indexes where table_name = ?",
-                new Object[]{tableName.toUpperCase()},
-                new ColumnMapRowMapper()
-        ).stream().findAny();
-
-        assertTrue("should have a table named " + tableName, tableList.isPresent());
+        AssertOnDb
+                .ForH2(jdbcTemplate)
+                .Table(tableName)
+                .exists();
     }
-
 ```
+
+Here is how ```AssertOnClass``` gets the class of a certain parameter in a field with generic arguments.
+
+
+```java
+        private Class<?> getFieldGenericType(int i) {
+            return (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[i];
+        }
+```
+
+for example, in case of ```Map<String, Integer>```:
+```java
+ getFieldGenericType(0) returns String.classs 
+ getFieldGenericType(1) returns Integer.classs 
+```
+
+
 For the tests to pass, the Customer object has to be refactored:
 
 ```java
@@ -357,6 +441,9 @@ public class Customer {
     }
 }
 ```
+
+
+
 ### ElementCollection of embedded type
 
 The other use case for ElementCollection is to have a property with complex type, a typical example of which is 
@@ -379,15 +466,11 @@ The only new step is to check existence of a list of properties on a class
 ```java
     @And("^The class has the following properties: \"([^\"]*)\"$")
     public void theClassHasTheFollowingProperties(String propertyList) throws Throwable {
-        String[] propertyNames= propertyList.split(",");
-        Class<?> target = Class.forName(Get("ClassName"));
-        for (String c : propertyNames) {
-            try {
-                target.getDeclaredField(c.trim());
-            } catch (NoSuchFieldException e) {
-                Assert.fail("Class doesn't have a field called " + c);
-            }
-        }
+        String[] fieldNames = Arrays.stream(propertyList.split(","))
+                .map(String::trim).toArray(String[]::new);
+        AssertOnClass
+                .For(Get("ClassName"))
+                .hasFields(fieldNames);
     }
 ```
 
@@ -428,23 +511,12 @@ Checking the generic types of Map is the same as List:
 ```java
     @And("^The class has a field called \"([^\"]*)\" that is of type Map of \"([^\"]*)\" and \"([^\"]*)\"$")
     public void theClassHasAFieldCalledThatIsOfTypeMapOfAnd(String propertyName, String type1, String type2) throws Throwable {
-        Field f = getFieldByName(propertyName, Get("ClassName"));
-        assertTrue(propertyName + " should be a Map instead of " + f.getType().getCanonicalName(),
-                Map.class.isAssignableFrom(f.getType()));
-        Class<?> actualClass = getFieldGenericType(f,0);
-        assertTrue(
-                "First Type Should be " + type1 + " instead of " + actualClass.getCanonicalName(),
-                getClassFromKey(type1).isAssignableFrom(actualClass)
-        );
-        actualClass = getFieldGenericType(f,1);
-        assertTrue(
-                "Second Type Should be " + type2 + " instead of " + actualClass.getCanonicalName(),
-                getClassFromKey(type2).isAssignableFrom(actualClass)
-        );
-    }
-
-    private Class<?> getFieldGenericType(Field f, int i){
-        return (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[i];
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(propertyName)
+                .isOfType(Map.class)
+                .genericArgIsOfType(0, getClassFromKey(type1))
+                .genericArgIsOfType(0, getClassFromKey(type2));
     }
 
     private Class<?> getClassFromKey(String type) {
@@ -523,38 +595,47 @@ Two new steps need to check the foreign keys between two tables to ensure that t
 relationship is unidirectional. here is how to implement them:
 
 ```java
-@Then("^the \"([^\"]*)\" table has a foreignKey to \"([^\"]*)\" table$")
+    @Then("^the \"([^\"]*)\" table has a foreignKey to \"([^\"]*)\" table$")
     public void theTableHasAForeignKeyToTable(String source, String target) throws Throwable {
-        Optional<Object> foreignKey = getForeignKey(source,target);
-
-        assertTrue(
-                source + " should have a foreign key to " + target,
-                foreignKey.isPresent()
-        );
+        AssertOnDb
+                .ForH2(jdbcTemplate)
+                .Table(source)
+                .hasForeignKeyTo(target);
     }
-
 
     @But("^The \"([^\"]*)\" table has no link to \"([^\"]*)\" table$")
     public void theTableHasNoLinkToTable(String source, String target) throws Throwable {
-        Optional<Object> foreignKey = getForeignKey(source,target);
-
-        assertFalse(
-                source + " should not have a foreign key to " + target,
-                foreignKey.isPresent()
-        );
+        AssertOnDb
+                .ForH2(jdbcTemplate)
+                .Table(source)
+                .hasNoForeignKeysTo(target);
     }
+```
 
-    private Optional<Object> getForeignKey(String source, String target) {
-        return jdbcTemplate.query(
-                "SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS where table_name = ?",
-                new Object[]{source.toUpperCase()},
-                new ColumnMapRowMapper()
-        ).stream()
-                .filter(c -> c.getOrDefault("CONSTRAINT_TYPE", "").equals("REFERENTIAL"))
-                .filter(c -> ((String) c.getOrDefault("SQL", "")).contains(target.toUpperCase()))
-                .map(c -> c.getOrDefault("UniqueIndexName", ""))
-                .findAny();
-    }
+To check for foreign keys in H2, the AssertOnDb class queries the schema constraints for the table and 
+checks to see if the SQL statement is pointing to the target table:
+
+```java
+            public TableAssertions hasForeignKeyTo(String targetTable){
+                assertTrue(
+                        tableName + " does not have a foreign key to " + targetTable,
+                        getTableConstraints()
+                                 .stream()
+                                 .filter(c -> c.getOrDefault("CONSTRAINT_TYPE", "")
+                                         .equals("REFERENTIAL"))
+                                 .anyMatch(c -> ((String) c.getOrDefault("SQL", ""))
+                                         .contains(targetTable.toUpperCase()))
+                );
+                return this;
+            }
+
+            private List<Map<String, Object>> getTableConstraints() {
+                return db.query(
+                        "SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS where table_name = ?",
+                        new Object[]{tableName.toUpperCase()},
+                        new ColumnMapRowMapper()
+                );
+            }
 ```
 
 ## Bidirectional One-to-One relationship
@@ -568,5 +649,26 @@ and its correct annotation.
 
 
 ```gherkin
-
+  @HibernateJPA
+  Scenario: Should have a ShippingContact class annotated as an entity
+    Given There exists a class named "ShippingContact" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "name, phoneNumber, customer"
+    Then  the "Entity" annotation exists in the class annotations
 ```
+
+Nothing new. and to check that customer has a shipping contact and there is a bidirectional relationship between the
+two entities:
+
+```gherkin
+  @HibernateJPA
+  Scenario: the Address class should have a unidirectional one to one relationship with HighRiseAddressExtension
+    Given There exists a class named "Customer" in "com.curisprofound.tddwebstack.db" package
+    And   The class has the following properties: "shippingContact"
+    And   The "shippingContact" field is annotated as "OneToOne"
+    Then  the "customer" table has a foreignKey to "Shipping_Contact" table
+    And  the "shipping_contact" table has a foreignKey to "Customer" table
+```
+
+All test steps have been implemented previously.
+
+
