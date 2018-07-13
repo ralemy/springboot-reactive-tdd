@@ -608,25 +608,47 @@ relationship is unidirectional. here is how to implement them:
         AssertOnDb
                 .ForH2(jdbcTemplate)
                 .Table(source)
-                .hasNoForeignKeysTo(target);
+                .Not()
+                .hasForeignKeyTo(target);
     }
 ```
+
+Note the use of .Not(). which flips the expectation for the immediate assertion that follows it. for example, the 
+above asserts that the source table does not have any foreign keys to the target table.
+
+If there are assertions further down the chain that also need negation they need to be preceeded with their own call to
+.Not(). 
+
+```java
+        AssertOnDb
+                .ForH2(jdbcTemplate)
+                .Table(source)
+                .Not()
+                .hasForeignKeyTo(target1)
+                .hasForeingKeyTo(target2)
+                .Not()
+                .hasForeignKeyTo(target3);
+``` 
+The above passes if the source only has foreign key to target 2, but no foreign keys to target 1 and 3.
 
 To check for foreign keys in H2, the AssertOnDb class queries the schema constraints for the table and 
 checks to see if the SQL statement is pointing to the target table:
 
 ```java
             public TableAssertions hasForeignKeyTo(String targetTable){
-                assertTrue(
-                        tableName + " does not have a foreign key to " + targetTable,
-                        getTableConstraints()
+                String msg = tableName +
+                        (not ? " has" : " doesn't have") + " a foreign key to " + targetTable;
+                boolean actual = getTableConstraints()
                                  .stream()
                                  .filter(c -> c.getOrDefault("CONSTRAINT_TYPE", "")
                                          .equals("REFERENTIAL"))
                                  .anyMatch(c -> ((String) c.getOrDefault("SQL", ""))
-                                         .contains(targetTable.toUpperCase()))
-                );
-                return this;
+                                         .contains(targetTable.toUpperCase()));
+                if(not)
+                    assertFalse(msg, actual);
+                else
+                    assertTrue(msg, actual);
+                return chain();
             }
 
             private List<Map<String, Object>> getTableConstraints() {
