@@ -49,6 +49,7 @@ public class StepsBase {
         world.Clear();
         if(shouldCallAfterTest)
             restDocumentation.afterTest();
+        shouldCallAfterTest = false;
     }
 
     protected  <T> List<T> jsonStringToClassArray(String content, Class<T> clazz) throws IOException {
@@ -65,6 +66,8 @@ public class StepsBase {
     public <T> T Get(Class<T> clazz){
         return world.Get(clazz);
     }
+
+    public String Get(String key) { return world.Get(String.class, key);}
 
     public <T> T Add(Class<T> clazz, T target, String key){
         return world.Add(clazz,target,key);
