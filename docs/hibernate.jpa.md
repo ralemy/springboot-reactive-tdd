@@ -777,7 +777,7 @@ a parameter to the annotation: ```@ManyToMany(mappedBy="products")``` for the in
 
 This will result in only one join table being created. 
 
-```gherkin
+```
   @HibernateJPA
   Scenario: Should have an Product class annotated as an entity
     Given There exists a class named "Product" in "com.curisprofound.tddwebstack.db" package
