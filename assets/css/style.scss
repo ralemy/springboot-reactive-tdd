@@ -1,0 +1,9 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+.language-gherkin .highlight .err {
+  color: #2879d0;
+  background-color: transparent;
+}
