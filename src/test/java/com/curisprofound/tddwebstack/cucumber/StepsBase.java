@@ -17,7 +17,6 @@ import org.springframework.web.context.WebApplicationContext;
 import java.io.IOException;
 import java.util.List;
 
-import static org.springframework.restdocs.webtestclient.WebTestClientRestDocumentation.documentationConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = TddWebStackApplication.class)
@@ -41,14 +40,6 @@ public class StepsBase {
         shouldCallAfterTest = false;
     }
 
-    public void initializeReactive(Class testClass, String testMethod) {
-        this.webTestClient = WebTestClient.bindToApplicationContext(this.context)
-                .configureClient()
-                .filter(documentationConfiguration(this.restDocumentation))
-                .build();
-        this.restDocumentation.beforeTest(testClass, testMethod);
-
-    }
 
     public MockMvc getMockMvc(Class testClass, String testMethod) {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -60,6 +51,10 @@ public class StepsBase {
         restDocumentation.beforeTest(testClass, testMethod);
         shouldCallAfterTest = true;
         return mockMvc;
+    }
+
+    public String[] getAllBeanNames(){
+        return context.getBeanDefinitionNames();
     }
 
     public void tearDown() {
