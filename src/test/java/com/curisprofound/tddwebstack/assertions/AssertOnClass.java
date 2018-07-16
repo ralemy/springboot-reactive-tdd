@@ -35,11 +35,33 @@ public class AssertOnClass {
             type = aType;
         }
 
-        public FieldAssertions Field(String propertyName) throws NoSuchFieldException {
-
-            return new FieldAssertions(getFieldByName(propertyName));
+        public FieldAssertions Field(String propertyName) {
+            try {
+                Field field = base.getDeclaredField(propertyName);
+                if(not)
+                    Assert.fail("field " + propertyName + " exists in class " + base.getCanonicalName());
+                return new FieldAssertions(field);
+            } catch (NoSuchFieldException e) {
+                if(not)
+                    return null;
+                Assert.fail("field " + propertyName + " does not exist in class " + base.getCanonicalName());
+            }
+            return null;
         }
 
+        public MethodAssertions Method(String methodName){
+            try {
+                Method method = base.getDeclaredMethod(methodName);
+                if(not)
+                    Assert.fail("Method " + methodName + " exists in class " + base.getCanonicalName());
+                return new MethodAssertions(method);
+            } catch (NoSuchMethodException e) {
+                if(not)
+                    return null;
+                Assert.fail("Method " + methodName + " does not exist in class " + base.getCanonicalName());
+            }
+            return null;
+        }
 
         public ClassAssertions implementsInterface(String interfaceName) {
             String msg = base.getCanonicalName() +
@@ -156,16 +178,43 @@ public class AssertOnClass {
             return Optional.empty();
         }
 
+        static AnnotationAssertions getAnnotation(Annotation[] annotations, String className, String name) {
+            Optional<Annotation> match = Arrays
+                    .stream(annotations)
+                    .filter(a -> a.annotationType().getName().contains(name))
+                    .findAny();
+            if (!match.isPresent())
+                Assert.fail(className + " has no annotation by name of " + name);
+            return new AnnotationAssertions(match.get());
+        }
+
         private static boolean hasAnnotation(Annotation[] actual, String annotation) {
             return Arrays.stream(actual).anyMatch(
                     a -> a.annotationType().getName().contains(annotation)
             );
         }
 
-        private Field getFieldByName(String propertyName) throws NoSuchFieldException {
-            Field f = base.getDeclaredField(correctCase(propertyName, "field"));
-            f.setAccessible(true);
-            return f;
+        public static class MethodAssertions extends Assertions<MethodAssertions>{
+
+            private final Method method;
+
+            public MethodAssertions(Method method) {
+                this.method = method;
+            }
+
+            public AnnotationAssertions Annotation(String name) {
+                return getAnnotation(method.getAnnotations(), method.getName(),name);
+            }
+
+            public MethodAssertions hasAnnotations(String... annotations) {
+                Optional<String> annotation = checkAnnotations(method.getAnnotations(), not, annotations);
+                String msg = method.getName() +
+                        (not ? " is annotated with " : " is not annotated with ") +
+                        annotation.orElse(" ");
+                assertFalse(msg, annotation.isPresent());
+                return chain();
+            }
+
         }
 
         public static class FieldAssertions extends Assertions<FieldAssertions> {
@@ -185,13 +234,7 @@ public class AssertOnClass {
             };
 
             public AnnotationAssertions Annotation(String name) {
-                Optional<Annotation> match = Arrays
-                        .stream(field.getAnnotations())
-                        .filter(a -> a.annotationType().getName().contains(name))
-                        .findAny();
-                if (!match.isPresent())
-                    Assert.fail(field.getName() + " has no annotation by name of " + name);
-                return new AnnotationAssertions(match.get());
+                return getAnnotation(field.getAnnotations(), field.getName(),name);
             }
 
             public FieldAssertions hasAnnotations(String... annotations) {
@@ -252,36 +295,40 @@ public class AssertOnClass {
             }
 
 
-            public static class AnnotationAssertions extends Assertions<AnnotationAssertions> {
+        }
+        public static class AnnotationAssertions extends Assertions<AnnotationAssertions> {
 
-                private final Annotation annotation;
-                private final String name;
+            private final Annotation annotation;
+            private final String name;
 
-                public AnnotationAssertions(Annotation annotation) {
-                    this.annotation = annotation;
-                    this.name = annotation.annotationType().getCanonicalName();
+            public AnnotationAssertions(Annotation annotation) {
+                this.annotation = annotation;
+                this.name = annotation.annotationType().getCanonicalName();
+            }
+
+            public AnnotationAssertions paramHasValue(String param, String value) {
+                try {
+                    Method method = annotation.getClass().getDeclaredMethod(param);
+
+                    String actual = (method.getReturnType().isArray()) ?
+                            ((String[]) method.invoke(annotation))[0] :
+                            (String) method.invoke(annotation);
+                    if (not)
+                        assertNotEquals(value, actual);
+                    else
+                        assertEquals(value, actual);
+                } catch (NoSuchMethodException e) {
+                    Assert.fail(name + " does not have a parameter called " + param);
+                } catch (IllegalAccessException e) {
+                    Assert.fail(name + " illegal access exception " + param);
+                } catch (InvocationTargetException e) {
+                    Assert.fail(name + "On " + param +
+                            " invocation target exception " + e.getMessage());
                 }
-
-                public AnnotationAssertions paramHasValue(String param, String value) {
-                    try {
-                        Method method = annotation.getClass().getDeclaredMethod(param);
-                        String actual = (String) method.invoke(annotation);
-                        if (not)
-                            assertNotEquals(value, actual);
-                        else
-                            assertEquals(value, actual);
-                    } catch (NoSuchMethodException e) {
-                        Assert.fail(name + " does not have a parameter called " + param);
-                    } catch (IllegalAccessException e) {
-                        Assert.fail(name + " illegal access exception " + param);
-                    } catch (InvocationTargetException e) {
-                        Assert.fail(name + "On " + param +
-                                " invocation target exception " + e.getMessage());
-                    }
-                    return chain();
-                }
+                return chain();
             }
         }
+
     }
 }
 
