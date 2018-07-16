@@ -152,24 +152,6 @@ public class HibernateJPASteps extends StepsBase {
                 .paramHasValue(param,value);
     }
 
-    private Class<?> getClassFromKey(String type) throws Exception {
-        if (type.equalsIgnoreCase("String"))
-            return String.class;
-        if (type.equalsIgnoreCase("Address"))
-            return Address.class;
-        if(type.equalsIgnoreCase("Invoice"))
-            return Invoice.class;
-        if(type.equalsIgnoreCase("Product"))
-            return Product.class;
-        if(type.equalsIgnoreCase("Author"))
-            return Author.class;
-        if(type.equalsIgnoreCase("Publisher"))
-            return Publisher.class;
-        if(type.equalsIgnoreCase("CustomerRepository"))
-            return CustomerRepository.class;
-
-        throw new Exception("Unknow type: " + type);
-    }
 
     @And("^The \"([^\"]*)\" field is of type \"([^\"]*)\"$")
     public void theFieldIsOfType(String arg0, String arg1) throws Throwable {

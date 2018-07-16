@@ -1,9 +1,10 @@
 package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.TddWebStackApplication;
-import com.curisprofound.tddwebstack.db.CustomerRepository;
+import com.curisprofound.tddwebstack.db.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -109,5 +110,27 @@ public class StepsBase {
         return world.Add(clazz);
     }
 
+    public Class<?> getClassFromKey(String type) {
+        if (type.equalsIgnoreCase("String"))
+            return String.class;
+        if (type.equalsIgnoreCase("Address"))
+            return Address.class;
+        if(type.equalsIgnoreCase("Invoice"))
+            return Invoice.class;
+        if(type.equalsIgnoreCase("Product"))
+            return Product.class;
+        if(type.equalsIgnoreCase("Author"))
+            return Author.class;
+        if(type.equalsIgnoreCase("Publisher"))
+            return Publisher.class;
+        if(type.equalsIgnoreCase("CustomerRepository"))
+            return CustomerRepository.class;
+        if(type.equalsIgnoreCase("Object"))
+            return Object.class;
+
+
+        Assert.fail("Unknown Type: " + type );
+        return null;
+    }
 
 }

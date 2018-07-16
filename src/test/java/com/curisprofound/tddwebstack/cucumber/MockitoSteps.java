@@ -11,6 +11,7 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.junit.Assert;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
@@ -31,14 +32,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
-public class MvcRestfulSteps extends StepsBase {
+public class MockitoSteps extends StepsBase {
 
     private static boolean executedFindAll = false;
 
@@ -51,12 +54,12 @@ public class MvcRestfulSteps extends StepsBase {
         return c;
     }
 
-    @Before("@MvcRestful")
+    @Before("@Mockito")
     public void beforeMvcRestful() {
         getMockMvc(this.getClass(), "beforeMvcRestful");
     }
 
-    @After("@MvcRestful")
+    @After("@Mockito")
     public void afterMvcResult() {
         reset(customerRepository);
         tearDown();
@@ -169,5 +172,17 @@ public class MvcRestfulSteps extends StepsBase {
     @Then("^I can verify the save function was called with \"([^\"]*)\"$")
     public void iCanVerifyTheSaveFunctionWasCalledWith(String arg0) throws Throwable {
         verify(customerRepository).save(Get(Customer.class));
+    }
+
+    @And("^The class has a method \"([^\"]*)\" with parameters \"([^\"]*)\"$")
+    public void theClassHasAMethodWithParameters(String arg0, String arg1) throws Throwable {
+        Class<?>[] types = Arrays.stream(arg1.split(","))
+                .map(String::trim)
+                .filter(c -> !c.equalsIgnoreCase(""))
+                .map(this::getClassFromKey)
+                .toArray(Class<?>[]::new);
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Method(arg0, types);
     }
 }

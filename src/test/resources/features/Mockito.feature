@@ -5,13 +5,20 @@ Feature: I need MVC based controllers
   So that I can implement CRUD use cases for JPA based repositories
 
 
-  @MvcRestful
+  @Mockito
+  Scenario: Should have a component to override Mock post processor
+    Given  There exists a class named "MockPostProcessor" in "com.curisprofound.tddwebstack.cucumber" package
+    And    The class has a method "postProcessAfterInitialization" with parameters "Object,String"
+    And    the "Component" annotation exists in the class annotations
+
+
+  @Mockito
   Scenario: Should have a repository class for customer ORM
     Given  There exists a class named "CustomerRepository" in "com.curisprofound.tddwebstack.db" package
     Then   The interface implements the "JpaRepository" with "Customer" and "Long" arguments
 
 
-  @MvcRestful
+  @Mockito
   Scenario: Should have a controller class for the MVC endpoints
     Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
     Then  the "RestController" annotation exists in the class annotations
@@ -19,7 +26,7 @@ Feature: I need MVC based controllers
     And   The "customerRepository" field is of type "CustomerRepository"
     And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
 
-  @MvcRestful
+  @Mockito
   Scenario: Should have a mock of customerRepository injected to the tests
     Given  the autowired customerRepository is a MockBean
     And    the findAll method is masked to return a customer named "customer1"
@@ -27,14 +34,14 @@ Feature: I need MVC based controllers
     And    the findAll method was call coundter would be 1
     And    execution of findall test is recorded
 
-  @MvcRestful
+  @Mockito
   Scenario: Should reset the mock before the next test
     Given  the findall test has been executed
     And    the findAll method was call coundter would be 0
     Then   the findAll mask is no longer active
     And    the findAll method was call coundter would be 1
 
-  @MvcRestful
+  @Mockito
   Scenario: Should be able to capture the input of the mock
     Given I have a customer object by name of "customer1"
     And   I have mocked save function to trap its input

@@ -15,6 +15,7 @@ public class AssertOnClass {
     public static ClassAssertions For(String className) throws ClassNotFoundException {
         return new ClassAssertions(Class.forName(className));
     }
+
     public static ClassAssertions For(Class<?> clazz) throws ClassNotFoundException {
         return new ClassAssertions(clazz);
     }
@@ -38,25 +39,25 @@ public class AssertOnClass {
         public FieldAssertions Field(String propertyName) {
             try {
                 Field field = base.getDeclaredField(propertyName);
-                if(not)
+                if (not)
                     Assert.fail("field " + propertyName + " exists in class " + base.getCanonicalName());
                 return new FieldAssertions(field);
             } catch (NoSuchFieldException e) {
-                if(not)
+                if (not)
                     return null;
                 Assert.fail("field " + propertyName + " does not exist in class " + base.getCanonicalName());
             }
             return null;
         }
 
-        public MethodAssertions Method(String methodName){
+        public MethodAssertions Method(String methodName, Class<?>... methodArgs) {
             try {
-                Method method = base.getDeclaredMethod(methodName);
-                if(not)
+                Method method = base.getDeclaredMethod(methodName,methodArgs);
+                if (not)
                     Assert.fail("Method " + methodName + " exists in class " + base.getCanonicalName());
                 return new MethodAssertions(method);
             } catch (NoSuchMethodException e) {
-                if(not)
+                if (not)
                     return null;
                 Assert.fail("Method " + methodName + " does not exist in class " + base.getCanonicalName());
             }
@@ -96,7 +97,7 @@ public class AssertOnClass {
             ParameterizedType pType = type == null ?
                     (ParameterizedType) base.getGenericSuperclass() : (ParameterizedType) type;
             boolean actual = Arrays.stream(pType.getActualTypeArguments())
-                    .anyMatch(s-> s.getTypeName().contains(typeName));
+                    .anyMatch(s -> s.getTypeName().contains(typeName));
             String msg = (type == null ? type.getTypeName() : base.getCanonicalName()) +
                     (not ? " has a generic of type " : " does not have a generic of type ") +
                     typeName;
@@ -194,7 +195,7 @@ public class AssertOnClass {
             );
         }
 
-        public static class MethodAssertions extends Assertions<MethodAssertions>{
+        public static class MethodAssertions extends Assertions<MethodAssertions> {
 
             private final Method method;
 
@@ -203,7 +204,7 @@ public class AssertOnClass {
             }
 
             public AnnotationAssertions Annotation(String name) {
-                return getAnnotation(method.getAnnotations(), method.getName(),name);
+                return getAnnotation(method.getAnnotations(), method.getName(), name);
             }
 
             public MethodAssertions hasAnnotations(String... annotations) {
@@ -215,6 +216,20 @@ public class AssertOnClass {
                 return chain();
             }
 
+            public MethodAssertions hasArguments(Class<?>... methodArgs) {
+                Class<?>[] actual = method.getParameterTypes();
+                return this;
+            }
+
+            private Optional<Class<?>> checkArguments(Class<?>[] actual, Class<?>[] expected) {
+                for (Class<?> e : expected)
+                    if (not && Arrays.stream(actual).anyMatch(a -> a.isAssignableFrom(e)))
+                        return Optional.of(e);
+                    else if (!not && Arrays.stream(actual).noneMatch(a -> a.isAssignableFrom(e)))
+                        return Optional.of(e);
+                return Optional.empty();
+            }
+
         }
 
         public static class FieldAssertions extends Assertions<FieldAssertions> {
@@ -224,17 +239,19 @@ public class AssertOnClass {
                 this.field = field;
             }
 
-            public FieldAssertions exists(){
+            public FieldAssertions exists() {
                 return this;
             }
 
             public Object getValue(Object instance) throws IllegalAccessException {
                 field.setAccessible(true);
                 return field.get(instance);
-            };
+            }
+
+            ;
 
             public AnnotationAssertions Annotation(String name) {
-                return getAnnotation(field.getAnnotations(), field.getName(),name);
+                return getAnnotation(field.getAnnotations(), field.getName(), name);
             }
 
             public FieldAssertions hasAnnotations(String... annotations) {
@@ -296,6 +313,7 @@ public class AssertOnClass {
 
 
         }
+
         public static class AnnotationAssertions extends Assertions<AnnotationAssertions> {
 
             private final Annotation annotation;

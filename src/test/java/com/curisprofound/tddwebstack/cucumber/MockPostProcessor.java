@@ -7,6 +7,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class MockPostProcessor implements BeanPostProcessor {
 
@@ -17,10 +20,11 @@ public class MockPostProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-        if (!CustomerRepository.class.isInstance(bean)) {
-            return bean;
-        }
+        List<Class> classes = new ArrayList<>();
+        classes.add(CustomerRepository.class);
 
-        return Mockito.mock(CustomerRepository.class, AdditionalAnswers.delegatesTo(bean));
+        return classes.stream().noneMatch(c-> c.isInstance(bean)) ?
+                bean :
+                Mockito.mock(CustomerRepository.class, AdditionalAnswers.delegatesTo(bean));
     }
 }
