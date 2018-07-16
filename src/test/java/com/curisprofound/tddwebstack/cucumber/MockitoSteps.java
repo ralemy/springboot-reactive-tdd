@@ -35,6 +35,7 @@ import org.springframework.test.context.TestExecutionListeners;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
@@ -55,10 +56,17 @@ public class MockitoSteps extends StepsBase {
         c.setName(name);
         return c;
     }
+    private Customer newCustomer(Long id) {
+        Customer c = new Customer();
+        c.setId(id);
+        return c;
+    }
 
     @Before("@Mockito")
     public void beforeMvcRestful() {
-        getMockMvc(this.getClass(), "beforeMvcRestful");
+        doReturn(Optional.of(newCustomer("customerFixed")))
+                .when(customerRepository)
+                .findById(any(Long.class));
     }
 
     @After("@Mockito")
@@ -228,6 +236,48 @@ public class MockitoSteps extends StepsBase {
         assertTrue(
                 " Object is not mocked!",
                 MockUtil.isMock(Get(Object.class, "postProcessorResult"))
+        );
+    }
+
+    @And("^The classes list has CustomerRepository in it$")
+    public void theClassesListHasCustomerRepositoryInIt() throws Throwable {
+        boolean actual = Get(MockPostProcessor.class).classes.stream().anyMatch(c -> c == CustomerRepository.class);
+        assertTrue(
+                "CustomerRepository is not in the mocked classes",
+                actual
+        );
+    }
+
+    @When("^I get the Customer with id (\\d+)$")
+    public void iGetTheCustomerWithId(long arg0) throws Throwable {
+        Optional<Customer> c = customerRepository.findById(arg0);
+        assertTrue(
+                "Customer id " + arg0 + " does not exist",
+                c.isPresent()
+        );
+        Add(Customer.class, c.orElse(null));
+    }
+
+    @Then("^the customer name is \"([^\"]*)\"$")
+    public void theCustomerNameIs(String arg0) throws Throwable {
+        assertEquals(
+                arg0,
+                Get(Customer.class).getName()
+        );
+    }
+
+    @Given("^I have mocked customerRepository FindbyId to return a customer with id plus (\\d+)$")
+    public void iHaveMockedCustomerRepositoryFindbyIdToReturnACustomerWithIdPlus(int arg0) throws Throwable {
+        doAnswer(input -> Optional.of(newCustomer(10 + (Long)input.getArguments()[0])))
+                .when(customerRepository)
+                .findById(any(Long.class));
+    }
+
+    @Then("^the customer id is (\\d+)$")
+    public void theCustomerIdIs(int arg0) throws Throwable {
+        assertEquals(
+                arg0,
+                Get(Customer.class).getId()
         );
     }
 }

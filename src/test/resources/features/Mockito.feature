@@ -6,14 +6,22 @@ Feature: I need MVC based controllers
 
 
   @Mockito
+  Scenario: Should have a repository class for customer ORM
+    Given  There exists a class named "CustomerRepository" in "com.curisprofound.tddwebstack.db" package
+    Then   The interface implements the "JpaRepository" with "Customer" and "Long" arguments
+
+
+  @Mockito
   Scenario: Should have a component to override Mock post processor
     Given  There exists a class named "MockPostProcessor" in "com.curisprofound.tddwebstack.cucumber" package
     And    The class has a method "postProcessAfterInitialization" with parameters "Object,String"
     And    the "Component" annotation exists in the class annotations
+    And    The class has a field called "classes" that is of type List of "Class"
 
   @Mockito
   Scenario: Should inject a bean for Mock post processor which mocks customerRepository
     Given There is a bean for "mockPostProcessor"
+    And   The classes list has CustomerRepository in it
     When   I call the post-processor with a general object
     Then   I get the same object without mocking
     When   I add a class to class list of preprocessor
@@ -21,19 +29,29 @@ Feature: I need MVC based controllers
     Then   I get the mocked version of the class
 
 
-  @Mockito
-  Scenario: Should have a repository class for customer ORM
-    Given  There exists a class named "CustomerRepository" in "com.curisprofound.tddwebstack.db" package
-    Then   The interface implements the "JpaRepository" with "Customer" and "Long" arguments
+#  @Mockito
+#  Scenario: Should have a controller class for the MVC endpoints
+#    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
+#    Then  the "RestController" annotation exists in the class annotations
+#    And   The class has the following properties: "customerRepository"
+#    And   The "customerRepository" field is of type "CustomerRepository"
+#    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
 
+  @Mockito
+  Scenario: Should return the same object for every Id
+    When   I get the Customer with id 10
+    Then   the customer name is "customerFixed"
+    When   I get the Customer with id 20
+    Then   the customer name is "customerFixed"
 
   @Mockito
-  Scenario: Should have a controller class for the MVC endpoints
-    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
-    Then  the "RestController" annotation exists in the class annotations
-    And   The class has the following properties: "customerRepository"
-    And   The "customerRepository" field is of type "CustomerRepository"
-    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
+  Scenario: Should be able to mock the object to return something based on input arguments
+    Given  I have mocked customerRepository FindbyId to return a customer with id plus 10
+    When   I get the Customer with id 10
+    Then   the customer id is 20
+    When   I get the Customer with id 25
+    Then   the customer id is 35
+
 
   @Mockito
   Scenario: Should have a mock of customerRepository injected to the tests

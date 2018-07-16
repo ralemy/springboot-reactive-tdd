@@ -73,22 +73,35 @@ Most unfortunately there is a [known bug][] in ```@SpyBean``` which throws an ex
 to spy on JpaRepositories, with a [workaround][] which includes a Component to override the post-processor
 for Mockito.
 
+First, let's test for a JpaRepository that we would later mock and inject to our tests:
+
+```gherkin
+  @Mockito
+  Scenario: Should have a repository class for customer ORM
+    Given  There exists a class named "CustomerRepository" in "com.curisprofound.tddwebstack.db" package
+    Then   The interface implements the "JpaRepository" with "Customer" and "Long" arguments
+```
+
 Based on the [workaround][], we need a MockPostProcessor class in com.curisprofound.tddwebstack.cucumber, which has a 
 ```postProcessAfterInitialization()``` method, which is annotated as ```Component``` and 
 takes a bean object and a name string. we can write a test for that:
 
 ```gherkin
+  @Mockito
   Scenario: Should have a component to override Mock post processor
     Given  There exists a class named "MockPostProcessor" in "com.curisprofound.tddwebstack.cucumber" package
     And    The class has a method "postProcessAfterInitialization" with parameters "Object,String"
     And    the "Component" annotation exists in the class annotations
+    And    The class has a field called "classes" that is of type List of "Class"
 ``` 
 
 Once this test passes, we can test that a bean exists and it works correctly:
 
 ```gherkin
+  @Mockito
   Scenario: Should inject a bean for Mock post processor which mocks customerRepository
     Given There is a bean for "mockPostProcessor"
+    And   The classes list has CustomerRepository in it
     When   I call the post-processor with a general object
     Then   I get the same object without mocking
     When   I add a class to class list of preprocessor
@@ -96,10 +109,120 @@ Once this test passes, we can test that a bean exists and it works correctly:
     Then   I get the mocked version of the class
 ```
 
+here is How the final workaround component looks like:
 
+```java
+@Component
+public class MockPostProcessor implements BeanPostProcessor {
 
+    public final List<Class> classes = new ArrayList<>();
 
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization(java.lang.Object, java.lang.String)
+     */
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
+        classes.add(CustomerRepository.class);
+
+        return classes.stream().noneMatch(c-> c.isInstance(bean)) ?
+                bean :
+                Mockito.mock(CustomerRepository.class, AdditionalAnswers.delegatesTo(bean));
+    }
+}
+```
+
+## Mocking Life Cycle
+
+Now that the workaround is implemented, at every feature file we can decide what to mock and 
+what to keep. to achieve this we add an annotation to each scenario, then create a @Before and
+@After annotated method to control what will be mocked and reset them at the end of the test:
+
+```java
+    @Before("@Mockito")
+    public void beforeMvcRestful() {
+        doReturn(Optional.of(newCustomer("customerFixed")))
+                .when(customerRepository)
+                .findById(any(Long.class));
+    }
+
+    @After("@Mockito")
+    public void afterMvcResult() {
+        reset(customerRepository);
+        tearDown();
+    }
+```
+It is important to reset the mock at the end of the Scenario so it doesn't carry the masks to
+next tests.
+
+## Testing for correct behaviour
+
+We can now test and make sure each of the above usage patterns works correctly:
+
+Since customerRepository is mocked in @Before method to return a customer with the name of 
+"customerFixed" no matter what Id is given, the following test should pass if mocking has 
+been done correctly:
+
+```gherkin
+  @Mockito
+  Scenario: Should return the same object for every Id
+    When   I get the Customer with id 10
+    Then   the customer name is "customerFixed"
+    When   I get the Customer with id 20
+    Then   the customer name is "customerFixed"
+```
+
+We can also set the answer relative to the argument that the mock receives. 
+
+```gherkin
+  @Mockito
+  Scenario: Should be able to mock the object to return something based on input arguments
+    Given  I have mocked customerRepository FindbyId to return a customer with id plus 10
+    When   I get the Customer with id 10
+    Then   the customer id is 20
+    When   I get the Customer with id 25
+    Then   the customer id is 35
+```
+
+We can see that a function has been called once, specific times, or never
+
+```gherkin
+  @Mockito
+  Scenario: Should have a mock of customerRepository injected to the tests
+    Given  the autowired customerRepository is a MockBean
+    And    the findAll method is masked to return a customer named "customer1"
+    Then   the findAll method will return one customer by name of "customer1"
+    And    the findAll method was call coundter would be 1
+    And    execution of findall test is recorded
+```
+
+And that the mock is reset between scenarios:
+
+```gherkin
+  @Mockito
+  Scenario: Should reset the mock before the next test
+    Given  the findall test has been executed
+    And    the findAll method was call coundter would be 0
+    Then   the findAll mask is no longer active
+    And    the findAll method was call coundter would be 1
+```
+
+Finally, we can capture and examine the invocation arguments of a method:
+
+```gherkin
+  @Mockito
+  Scenario: Should be able to capture the input of the mock
+    Given I have a customer object by name of "customer1"
+    And   I have mocked save function to trap its input
+    When  I save it to customer repository
+    Then  I can verify the save function was called with "customer1"
+```
+
+# Next Steps
+
+In the next iteration we will examine the creation of a [custom runner][] or implmentation of 
+multiple Cucumber runner classes.
 
 
 [custom runner]:https://stackoverflow.com/questions/35314463/is-it-possible-to-configure-cucumber-to-run-the-same-test-with-different-spring
