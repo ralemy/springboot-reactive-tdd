@@ -12,6 +12,12 @@ Feature: I need reactive MongoDb tools
     And   The "id" field is of type "String"
     And   the "Document" annotation exists in the class annotations
 
+
+  @ReactiveMongo
+  Scenario: Should have a Book object marked as Document
+    Given  there is a "bookRepository" autowired
+    Then   The "BookRepository" class implements the "ReactiveMongoRepository" with "Book" and "String" arguments
+
   @ReactiveMongo
   Scenario: Should be able to use repository to save a book
     Given I have instantiated book objects as:
@@ -19,11 +25,6 @@ Feature: I need reactive MongoDb tools
       |idOne|titleone|authorone|publisherone|
     When  I save the book to the database using the "BookRepository"
     Then  It will be found in the database
-
-  @ReactiveMongo
-  Scenario: Should have cleared the database between test calls
-    Given previous test has run
-    Then  The database should not have a collection
 
   @ReactiveMongo
   Scenario: Should be able to update a book in repository
@@ -43,7 +44,12 @@ Feature: I need reactive MongoDb tools
     Then  the book by id "idOne" does not exist in the repository
 
   @ReactiveMongo
-  Scenario: Should hava author class as a document
+  Scenario: Should have cleared the database between test calls
+    Given previous test has run
+    Then  The database should not have a collection
+
+  @ReactiveMongo
+  Scenario: Should hava author class as an embedded document
     Given There exists a class named "Author" in "com.curisprofound.tddwebstack.db" package
     Then  The class has the following properties: "name, phone"
 
@@ -71,3 +77,15 @@ Feature: I need reactive MongoDb tools
     Given There exists a class named "Book" in "com.curisprofound.tddwebstack.db" package
     Then  The "publisher" field is annotated as "DBRef"
     And   The "publisher" field is of type "Publisher"
+
+  @ReactiveMongo
+  Scenario: Should have a Book object marked as Document
+    Given  there is a "publisherRepository" autowired
+    Then   The "PublisherRepository" class implements the "ReactiveMongoRepository" with "Publisher" and "String" arguments
+
+  @ReactiveMongo
+  Scenario: Should embedd author class inside book class
+    Given I have saved book objects as:
+      |id|title|author|publisher|
+      |idOne|titleone|authorone,phoneOne|publisherone,postalCode1|
+    Then  the book by Id "idOne" has a publisher by postalCode of "postalCode1"

@@ -1,5 +1,6 @@
 package com.curisprofound.tddwebstack.cucumber;
 
+import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.assertions.AssertOnDb;
 import com.curisprofound.tddwebstack.db.*;
 import cucumber.api.DataTable;
@@ -74,6 +75,7 @@ public class ReactiveMongoSteps extends StepsBase{
         if(publisherParams.length>0)
             p.setName(publisherParams[0].trim());
         b.setPublisher(p);
+        p.getBooks().add(b.getId());
         return b;
     }
 
@@ -189,6 +191,38 @@ public class ReactiveMongoSteps extends StepsBase{
         assertEquals(
                 arg1,
                 b.getAuthor().getName()
+        );
+    }
+
+    @Given("^there is a \"([^\"]*)\" autowired$")
+    public void thereIsAAutowired(String arg0) throws Throwable {
+        Object target  = AssertOnClass
+                .For(this.getClass())
+                .Field(arg0)
+                .exists()
+                .getValue(this);
+        assertNotNull(
+                arg0 + " is null", target
+        );
+        Add(Object.class, target, arg0.toUpperCase());
+    }
+
+    @Then("^The \"([^\"]*)\" class implements the \"([^\"]*)\" with \"([^\"]*)\" and \"([^\"]*)\" arguments$")
+    public void theClassImplementsTheWithAndArguments(String className, String root, String type1, String type2) throws Throwable {
+        AssertOnClass
+                .For(Get(Object.class, className.toUpperCase()).getClass())
+                .implementsInterface(className)
+                .implementsGenericInterface(root)
+                .hasGenericType(type1)
+                .hasGenericType(type2);
+    }
+
+    @Then("^the book by Id \"([^\"]*)\" has a publisher by postalCode of \"([^\"]*)\"$")
+    public void theBookByIdHasAPublisherByPostalCodeOf(String arg0, String arg1) throws Throwable {
+        Book b = bookRepository.findById(arg0).block();
+        assertEquals(
+                arg1,
+                b.getPublisher().getPostalCode()
         );
     }
 }
