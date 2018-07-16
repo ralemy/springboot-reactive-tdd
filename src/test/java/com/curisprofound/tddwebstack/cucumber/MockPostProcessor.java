@@ -13,6 +13,8 @@ import java.util.List;
 @Component
 public class MockPostProcessor implements BeanPostProcessor {
 
+    public final List<Class> classes = new ArrayList<>();
+
     /*
      * (non-Javadoc)
      * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization(java.lang.Object, java.lang.String)
@@ -20,7 +22,6 @@ public class MockPostProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-        List<Class> classes = new ArrayList<>();
         classes.add(CustomerRepository.class);
 
         return classes.stream().noneMatch(c-> c.isInstance(bean)) ?

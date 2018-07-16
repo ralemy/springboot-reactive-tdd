@@ -11,6 +11,15 @@ Feature: I need MVC based controllers
     And    The class has a method "postProcessAfterInitialization" with parameters "Object,String"
     And    the "Component" annotation exists in the class annotations
 
+  @Mockito
+  Scenario: Should inject a bean for Mock post processor which mocks customerRepository
+    Given There is a bean for "mockPostProcessor"
+    When   I call the post-processor with a general object
+    Then   I get the same object without mocking
+    When   I add a class to class list of preprocessor
+    And    I call the post-processor with a an instance of that class
+    Then   I get the mocked version of the class
+
 
   @Mockito
   Scenario: Should have a repository class for customer ORM

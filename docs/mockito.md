@@ -84,7 +84,18 @@ takes a bean object and a name string. we can write a test for that:
     And    the "Component" annotation exists in the class annotations
 ``` 
 
-Once this test passes, we can test 
+Once this test passes, we can test that a bean exists and it works correctly:
+
+```gherkin
+  Scenario: Should inject a bean for Mock post processor which mocks customerRepository
+    Given There is a bean for "mockPostProcessor"
+    When   I call the post-processor with a general object
+    Then   I get the same object without mocking
+    When   I add a class to class list of preprocessor
+    And    I call the post-processor with a an instance of that class
+    Then   I get the mocked version of the class
+```
+
 
 
 

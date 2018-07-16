@@ -2,6 +2,7 @@ package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.controllers.CustomerController;
+import com.curisprofound.tddwebstack.db.Address;
 import com.curisprofound.tddwebstack.db.Customer;
 import com.curisprofound.tddwebstack.db.CustomerRepository;
 import cucumber.api.PendingException;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
@@ -184,5 +186,48 @@ public class MockitoSteps extends StepsBase {
         AssertOnClass
                 .For(Get("ClassName"))
                 .Method(arg0, types);
+    }
+
+    @Given("^There is a bean for \"([^\"]*)\"$")
+    public void thereIsABeanFor(String arg0) throws Throwable {
+        Object bean = getBean(arg0);
+        assertNotNull(
+                "Bean doesn't exist with name " + arg0,
+                bean
+        );
+        Add(MockPostProcessor.class, (MockPostProcessor) bean);
+    }
+
+    @When("^I call the post-processor with a general object$")
+    public void iCallThePostProcessorWithAGeneralObject() throws Throwable {
+        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Object(),"");
+        Add(Object.class, result, "postProcessorResult");
+    }
+
+    @Then("^I get the same object without mocking$")
+    public void iGetTheSameObjectWithoutMocking() throws Throwable {
+        assertFalse(
+                " Object is mocked!",
+                MockUtil.isMock(Get(Object.class, "postProcessorResult"))
+        );
+    }
+
+    @When("^I add a class to class list of preprocessor$")
+    public void iAddAnClassToClassListOfPreprocessor() throws Throwable {
+        Get(MockPostProcessor.class).classes.add(Address.class);
+    }
+
+    @When("^I call the post-processor with a an instance of that class$")
+    public void iCallThePostProcessorWithAAnInstanceOfThatClass() throws Throwable {
+        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Address(),"");
+        Add(Object.class, result, "postProcessorResult");
+    }
+
+    @Then("^I get the mocked version of the class$")
+    public void iGetTheMockedVersionOfTheClass() throws Throwable {
+        assertTrue(
+                " Object is not mocked!",
+                MockUtil.isMock(Get(Object.class, "postProcessorResult"))
+        );
     }
 }
