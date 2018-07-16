@@ -29,14 +29,6 @@ Feature: I need MVC based controllers
     Then   I get the mocked version of the class
 
 
-#  @Mockito
-#  Scenario: Should have a controller class for the MVC endpoints
-#    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
-#    Then  the "RestController" annotation exists in the class annotations
-#    And   The class has the following properties: "customerRepository"
-#    And   The "customerRepository" field is of type "CustomerRepository"
-#    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
-
   @Mockito
   Scenario: Should return the same object for every Id
     When   I get the Customer with id 10

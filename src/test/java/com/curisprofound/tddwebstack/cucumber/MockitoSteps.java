@@ -63,26 +63,18 @@ public class MockitoSteps extends StepsBase {
     }
 
     @Before("@Mockito")
-    public void beforeMvcRestful() {
+    public void beforeMockito() {
         doReturn(Optional.of(newCustomer("customerFixed")))
                 .when(customerRepository)
                 .findById(any(Long.class));
     }
 
     @After("@Mockito")
-    public void afterMvcResult() {
+    public void afterMockito() {
         reset(customerRepository);
         tearDown();
     }
 
-    @And("^The \"([^\"]*)\" method of the class is annotated by \"([^\"]*)\" with parameter \"([^\"]*)\" set to \"([^\"]*)\"$")
-    public void theMethodOfTheClassIsAnnotatedByWithParameterSetTo(String method, String annotation, String pname, String pvalue) throws Throwable {
-        AssertOnClass
-                .For(Get("ClassName"))
-                .Method(method)
-                .Annotation(annotation)
-                .paramHasValue(pname, pvalue);
-    }
 
     @Then("^The interface implements the \"([^\"]*)\" with \"([^\"]*)\" and \"([^\"]*)\" arguments$")
     public void theInterfaceImplementsTheWithAndArguments(String root, String type1, String type2) throws Throwable {
