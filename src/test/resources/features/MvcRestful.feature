@@ -11,3 +11,15 @@ Feature: I need restful interfaces using MVC components
     And   The class has the following properties: "customerRepository"
     And   The "customerRepository" field is of type "CustomerRepository"
     And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
+
+  @MvcRestful
+  Scenario: Should have a mock of customer repository autowired
+    Given the autowired customerRepository is a MockBean
+    And   the findAll method is masked to return a customer named "customerOne"
+    Then  the findAll method will return one customer by name of "customerOne"
+
+  @MvcRestful
+  Scenario: Should return the mocked result from the /customers endpoint
+    Given   the findAll method is masked to return a customer named "customerOne"
+    When    I "GET" the "/customers" endpoint
+    Then    I get a list of Customer objects with one member by the name of "customerOne"
