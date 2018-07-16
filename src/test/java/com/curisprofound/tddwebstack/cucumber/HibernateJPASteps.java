@@ -2,9 +2,8 @@ package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.assertions.AssertOnDb;
-import com.curisprofound.tddwebstack.db.Address;
-import com.curisprofound.tddwebstack.db.Invoice;
-import com.curisprofound.tddwebstack.db.Product;
+import com.curisprofound.tddwebstack.db.*;
+import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.en.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +22,6 @@ public class HibernateJPASteps extends StepsBase {
     }
 
 
-    @Given("^There exists a class named \"([^\"]*)\" in \"([^\"]*)\" package$")
-    public void thereExistsAClassNamedInPackage(String arg0, String arg1) throws Throwable {
-        String name = arg1 + "." + arg0;
-        Class.forName(name);
-        Add(String.class, name, "ClassName");
-
-    }
 
 
     @Then("^the \"([^\"]*)\" annotation exists in the class annotations$")
@@ -165,8 +157,27 @@ public class HibernateJPASteps extends StepsBase {
             return Invoice.class;
         if(type.equalsIgnoreCase("Product"))
             return Product.class;
+        if(type.equalsIgnoreCase("Author"))
+            return Author.class;
+        if(type.equalsIgnoreCase("Publisher"))
+            return Publisher.class;
+
         throw new Exception("Unknow type: " + type);
     }
 
+    @And("^The \"([^\"]*)\" field is of type \"([^\"]*)\"$")
+    public void theFieldIsOfType(String arg0, String arg1) throws Throwable {
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Field(arg0)
+                .isOfType(getClassFromKey(arg1));
+    }
+
+    @Given("^There exists a class named \"([^\"]*)\" in \"([^\"]*)\" package$")
+    public void thereExistsAClassNamedInPackage(String className, String packageName) throws Throwable {
+        String fullName = packageName + "." + className;
+        Class.forName(fullName);
+        Add(String.class, fullName, "ClassName");
+    }
 }
 

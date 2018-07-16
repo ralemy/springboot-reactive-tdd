@@ -3,10 +3,7 @@ package com.curisprofound.tddwebstack.assertions;
 import org.junit.Assert;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Optional;
@@ -18,14 +15,24 @@ public class AssertOnClass {
     public static ClassAssertions For(String className) throws ClassNotFoundException {
         return new ClassAssertions(Class.forName(className));
     }
+    public static ClassAssertions For(Class<?> clazz) throws ClassNotFoundException {
+        return new ClassAssertions(clazz);
+    }
 
 
     public static class ClassAssertions extends Assertions<ClassAssertions> {
 
         private final Class<?> base;
+        private final Type type;
 
         ClassAssertions(Class<?> aClass) {
             base = aClass;
+            type = null;
+        }
+
+        ClassAssertions(Type aType) {
+            base = aType.getClass();
+            type = aType;
         }
 
         public FieldAssertions Field(String propertyName) throws NoSuchFieldException {
@@ -33,6 +40,50 @@ public class AssertOnClass {
             return new FieldAssertions(getFieldByName(propertyName));
         }
 
+
+        public ClassAssertions implementsInterface(String interfaceName) {
+            String msg = base.getCanonicalName() +
+                    (not ? " implements " : " does not implement ") +
+                    interfaceName + " interface";
+            Optional<Class<?>> interfaceClass = Arrays.stream(base.getInterfaces())
+                    .filter(i -> i.getName().contains(interfaceName))
+                    .findAny();
+            if (not)
+                assertFalse(msg, interfaceClass.isPresent());
+            else
+                assertTrue(msg, interfaceClass.isPresent());
+
+            return not ? this : new ClassAssertions(interfaceClass.get());
+        }
+
+        public ClassAssertions implementsGenericInterface(String interfaceName) {
+            String msg = base.getCanonicalName() +
+                    (not ? " implements " : " does not implement ") +
+                    interfaceName + " generic interface";
+            Optional<Type> interfaceClass = Arrays.stream(base.getGenericInterfaces())
+                    .filter(i -> i.getTypeName().contains(interfaceName))
+                    .findAny();
+            if (not)
+                assertFalse(msg, interfaceClass.isPresent());
+            else
+                assertTrue(msg, interfaceClass.isPresent());
+            return not ? this : new ClassAssertions(interfaceClass.get());
+        }
+
+        public ClassAssertions hasGenericType(String typeName) {
+            ParameterizedType pType = type == null ?
+                    (ParameterizedType) base.getGenericSuperclass() : (ParameterizedType) type;
+            boolean actual = Arrays.stream(pType.getActualTypeArguments())
+                    .anyMatch(s-> s.getTypeName().contains(typeName));
+            String msg = (type == null ? type.getTypeName() : base.getCanonicalName()) +
+                    (not ? " has a generic of type " : " does not have a generic of type ") +
+                    typeName;
+            if (not)
+                assertFalse(msg, actual);
+            else
+                assertTrue(msg, actual);
+            return this;
+        }
 
         public ClassAssertions isReadable(String propertyName) {
             String msg = propertyName +
@@ -120,9 +171,18 @@ public class AssertOnClass {
         public static class FieldAssertions extends Assertions<FieldAssertions> {
             private final Field field;
 
-            FieldAssertions(Field field) throws NoSuchFieldException {
+            FieldAssertions(Field field) {
                 this.field = field;
             }
+
+            public FieldAssertions exists(){
+                return this;
+            }
+
+            public Object getValue(Object instance) throws IllegalAccessException {
+                field.setAccessible(true);
+                return field.get(instance);
+            };
 
             public AnnotationAssertions Annotation(String name) {
                 Optional<Annotation> match = Arrays
