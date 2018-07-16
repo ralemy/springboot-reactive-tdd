@@ -1,20 +1,24 @@
-# Test Driven Development of Web Services using Spring Boot
+# Test Driven Development of Full Stack applications using Spring Boot
 
-This project explains and demonstrates necessary steps to create Restful 
-web services under the TDD methodology using Spring Boot.
+See Github pages (https://ralemy.github.io/springboot-reactive-tdd/)
+
+This project explains and demonstrates necessary steps to create a full stack
+application using TDD methodology with Spring Boot.
 
 The current status of the project follows:
 
-| Technique Demonstrated | Status | Commit ID|
+| Technique Demonstrated | Stack Position | Tag ID|
 |------------------------|--------|----------|
-|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Iteration 01|[Iteration 01](../../tree/step01.Cucumber)|
-|[H2 repositories for production and test](docs/hibernate.jpa.md)| Iteration 01|[Iteration01](../../tree/step02.hibernateh2)|
-|[MongoDB reactive repositories for production and test](docs/mongo.md)|Iteration01|[Iteration01](../../tree/step03.reactivemongo)|
-|MVC Restful service|Not ImplementedYet|Not Applicable|
-|Reactive Restful Service|Not ImplementedYet|Not Applicable|
-|Akka Actor Sytem|Not ImplementedYet|Not Applicable|
-|Reactive Web Socket implementation|Not ImplementedYet|Not Applicable|
-|Server Side Events| Not ImplementedYet|Not Applicable|
+|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Backend|[Cucumber](../../tree/step01.Cucumber)|
+|[H2 repositories for production and test](docs/hibernate.jpa.md)| Backend |[Hibernate](../../tree/step02.hibernateh2)|
+|[MongoDB reactive repositories for production and test](docs/mongo.md)|Backend|[Mongo](../../tree/step03.reactivemongo)|
+|MVC Restful service|Middleware|Not Applicable|
+|Reactive Restful Service|Middleware|Not Applicable|
+|Akka Actor Sytem|Middleware|Not Applicable|
+|Reactive Web Socket implementation|Middleware|Not Applicable|
+|Server Side Events| Middleware|Not Applicable|
+|Angular integration with MVC services | Frontend | Not Applicable|
+|Angular integration with reactive streaming | Frontend | Not Applicable|
 
 
 # Development Protocol
