@@ -51,7 +51,7 @@ public class StepsBase {
         shouldCallAfterTest = false;
     }
 
-    public MockMvc getMockMvc(Class testClass, String testMethod) {
+    public void mockMvc(Class testClass, String testMethod) {
 
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(
@@ -62,7 +62,6 @@ public class StepsBase {
         restDocumentation.beforeTest(testClass, testMethod);
         shouldCallAfterTest = true;
         Add(MockMvc.class, mockMvc);
-        return mockMvc;
     }
 
     public Object getBean(String beanName){
