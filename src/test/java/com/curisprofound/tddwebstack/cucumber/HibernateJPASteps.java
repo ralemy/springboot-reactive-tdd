@@ -7,11 +7,15 @@ import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.en.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.*;
 
+
 public class HibernateJPASteps extends StepsBase {
+
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -161,6 +165,8 @@ public class HibernateJPASteps extends StepsBase {
             return Author.class;
         if(type.equalsIgnoreCase("Publisher"))
             return Publisher.class;
+        if(type.equalsIgnoreCase("CustomerRepository"))
+            return CustomerRepository.class;
 
         throw new Exception("Unknow type: " + type);
     }

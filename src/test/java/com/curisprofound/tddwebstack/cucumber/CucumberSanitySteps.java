@@ -1,20 +1,19 @@
 package com.curisprofound.tddwebstack.cucumber;
 
+import com.curisprofound.tddwebstack.db.CustomerRepository;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import static org.junit.Assert.assertEquals;
 
 public class CucumberSanitySteps  extends StepsBase{
 
-    @Before("@CucumberSanity")
-    public void beforeCucumberSanity(){
-
-    }
 
     @After("@CucumberSanity")
     public void afterCucumberSanity(){

@@ -57,4 +57,5 @@ public class Customer {
             invoices = new ArrayList<>();
         return invoices;
     }
+
 }

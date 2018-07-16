@@ -784,3 +784,6 @@ This will result in only one join table being created.
     And   The class has a field called "invoices" that is of type List of "Invoice"
     Then   The "invoices" field is annotated as "ManyToMany"
 ```
+
+references:
+https://github.com/tristanchanson/spring-bean-swap-example/blob/master/src/main/java/com/tristanchanson/service/mock/SwapServiceConfig.java
