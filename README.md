@@ -9,7 +9,7 @@ The current status of the project follows:
 |------------------------|--------|----------|
 |[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Iteration 01|[Iteration 01](../../tree/step01.Cucumber)|
 |[H2 repositories for production and test](docs/hibernate.jpa.md)| Iteration 01|[Iteration01](../../tree/step02.hibernateh2)|
-|[MongoDB reactive repositories for production and test](docs/mongo.md)|Not ImplementedYet|Not Applicable|
+|[MongoDB reactive repositories for production and test](docs/mongo.md)|Iteration01|[Iteration01](../../tree/step03.reactivemongo)|
 |MVC Restful service|Not ImplementedYet|Not Applicable|
 |Reactive Restful Service|Not ImplementedYet|Not Applicable|
 |Akka Actor Sytem|Not ImplementedYet|Not Applicable|
