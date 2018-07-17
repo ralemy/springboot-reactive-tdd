@@ -35,5 +35,12 @@ Feature: I need restful interfaces using MVC components
   @MvcRestful
   Scenario: Should reject call to save customer if not authenticated
     Given I have mocked save function to just return its input
-    And   I "PUT" the "/customer" with "customerOne" and no authentication
-    Then  I recieve a 403 response status
+    When   I "PUT" the "/customer" with "customerOne" and no authentication
+    Then  I receive a 403 response status
+
+  @MvcRestful
+  Scenario: Should accept call to save customer if authenticated
+    Given I have mocked save function to just return its input
+    And   I have a user "usr1" and password "pass1" configured
+    When  I "PUT" the "/customer" with "customerOne" with such credentials
+    Then  I receive a 403 response status

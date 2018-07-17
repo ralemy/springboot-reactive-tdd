@@ -9,22 +9,30 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class MvcRestfulSteps extends StepsBase{
+
+    @Autowired
+    private AuthenticationManagerBuilder authManagerBuilder;
 
     @Before("@MvcRestful")
     public void beforeMvcRestful() {
@@ -93,8 +101,33 @@ public class MvcRestfulSteps extends StepsBase{
 
     }
 
-    @Then("^I recieve a (\\d+) response status$")
-    public void iRecieveAResponseStatus(int arg0) throws Throwable {
+
+    @Then("^I receive a (\\d+) response status$")
+    public void iReceiveAResponseStatus(int arg0) throws Throwable {
         Get(ResultActions.class).andExpect(status().is(arg0));
+    }
+
+    @And("^I have a user \"([^\"]*)\" and password \"([^\"]*)\" configured$")
+    public void iHaveAUserAndPasswordConfigured(String user, String pass) throws Throwable {
+        Map<String,String> creds = new HashMap<>();
+        creds.put("User", user.trim());
+        creds.put("Password", pass.trim());
+        creds.put("Role", "USER");
+        Add(Map.class, creds);
+    }
+
+    @When("^I \"([^\"]*)\" the \"([^\"]*)\" with \"([^\"]*)\" with such credentials$")
+    public void iTheWithWithSuchCredentials(String arg0, String endpoint, String customerName) throws Throwable {
+        Add(Customer.class, newCustomer(customerName));
+        Map<String, String> creds = Get(Map.class);
+
+        ResultActions result = Get(MockMvc.class).perform(
+                put(endpoint).contentType(MediaType.APPLICATION_JSON)
+                        .with(user(creds.get("User"))
+                                .password(creds.get("Password"))
+                                .roles(creds.get("Role")))
+                        .content(jsonObjectToString(Get(Customer.class)))
+        );
+        Add(ResultActions.class, result);
     }
 }

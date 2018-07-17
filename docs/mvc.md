@@ -125,10 +125,14 @@ Then we check that if we try to connect to it without authentication,
 it will fail.
 
 ```gherkin
-Scenario: should reject call to save customer if not authenticated
-    
-
+  @MvcRestful
+  Scenario: Should reject call to save customer if not authenticated
+    Given I have mocked save function to just return its input
+    And   I "PUT" the "/customer" with "customerOne" and no authentication
+    Then  I recieve a 403 response status
 ```
+
+
 
 
 
