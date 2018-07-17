@@ -51,38 +51,20 @@ public class MockitoSteps extends StepsBase {
     @Autowired
     private CustomerRepository customerRepository;
 
-    private Customer newCustomer(String name) {
-        Customer c = new Customer();
-        c.setName(name);
-        return c;
-    }
-    private Customer newCustomer(Long id) {
-        Customer c = new Customer();
-        c.setId(id);
-        return c;
-    }
 
     @Before("@Mockito")
-    public void beforeMvcRestful() {
+    public void beforeMockito() {
         doReturn(Optional.of(newCustomer("customerFixed")))
                 .when(customerRepository)
                 .findById(any(Long.class));
     }
 
     @After("@Mockito")
-    public void afterMvcResult() {
+    public void afterMockito() {
         reset(customerRepository);
         tearDown();
     }
 
-    @And("^The \"([^\"]*)\" method of the class is annotated by \"([^\"]*)\" with parameter \"([^\"]*)\" set to \"([^\"]*)\"$")
-    public void theMethodOfTheClassIsAnnotatedByWithParameterSetTo(String method, String annotation, String pname, String pvalue) throws Throwable {
-        AssertOnClass
-                .For(Get("ClassName"))
-                .Method(method)
-                .Annotation(annotation)
-                .paramHasValue(pname, pvalue);
-    }
 
     @Then("^The interface implements the \"([^\"]*)\" with \"([^\"]*)\" and \"([^\"]*)\" arguments$")
     public void theInterfaceImplementsTheWithAndArguments(String root, String type1, String type2) throws Throwable {
@@ -162,12 +144,6 @@ public class MockitoSteps extends StepsBase {
     @Given("^I have a customer object by name of \"([^\"]*)\"$")
     public void iHaveACustomerObjectByNameOf(String arg0) throws Throwable {
         Add(Customer.class, newCustomer(arg0));
-    }
-
-    @And("^I have mocked save function to trap its input$")
-    public void iHaveMockedSaveFunctionToTrapItsInput() throws Throwable {
-        doAnswer((Answer<Customer>) invocationOnMock -> (Customer) invocationOnMock.getArguments()[0])
-                .when(customerRepository).save(any(Customer.class));
     }
 
     @When("^I save it to customer repository$")
@@ -279,5 +255,11 @@ public class MockitoSteps extends StepsBase {
                 arg0,
                 Get(Customer.class).getId()
         );
+    }
+
+    @And("^I have mocked save function to just return its input$")
+    public void iHaveMockedSaveFunctionToJustReturnItsInput() throws Throwable {
+        doAnswer((Answer<Customer>) invocationOnMock -> (Customer) invocationOnMock.getArguments()[0])
+                .when(customerRepository).save(any(Customer.class));
     }
 }

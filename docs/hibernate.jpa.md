@@ -37,14 +37,13 @@ is needed is to exclude the endpoint from security.
 To achieve that, create a configuration class that is extended from Web
 
 ```java
-package com.curisprofound.tddwebstack.config;
-// imports not shown
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.anonymous()
-                .and().authorizeRequests().antMatchers("/h2**").permitAll()
+        http.authorizeRequests()
+                .antMatchers("/h2/**").permitAll()
+                .anyRequest().authenticated()
                 .and().logout().permitAll();
         http.csrf().disable();
         http.headers().frameOptions().disable();

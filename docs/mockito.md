@@ -141,14 +141,14 @@ what to keep. to achieve this we add an annotation to each scenario, then create
 
 ```java
     @Before("@Mockito")
-    public void beforeMvcRestful() {
+    public void beforeMockito() {
         doReturn(Optional.of(newCustomer("customerFixed")))
                 .when(customerRepository)
                 .findById(any(Long.class));
     }
 
     @After("@Mockito")
-    public void afterMvcResult() {
+    public void afterMockito() {
         reset(customerRepository);
         tearDown();
     }

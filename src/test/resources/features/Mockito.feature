@@ -29,14 +29,6 @@ Feature: I need MVC based controllers
     Then   I get the mocked version of the class
 
 
-#  @Mockito
-#  Scenario: Should have a controller class for the MVC endpoints
-#    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
-#    Then  the "RestController" annotation exists in the class annotations
-#    And   The class has the following properties: "customerRepository"
-#    And   The "customerRepository" field is of type "CustomerRepository"
-#    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
-
   @Mockito
   Scenario: Should return the same object for every Id
     When   I get the Customer with id 10
@@ -71,7 +63,7 @@ Feature: I need MVC based controllers
   @Mockito
   Scenario: Should be able to capture the input of the mock
     Given I have a customer object by name of "customer1"
-    And   I have mocked save function to trap its input
+    And   I have mocked save function to just return its input
     When  I save it to customer repository
     Then  I can verify the save function was called with "customer1"
 
