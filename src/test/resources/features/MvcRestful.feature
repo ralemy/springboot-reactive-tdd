@@ -28,6 +28,12 @@ Feature: I need restful interfaces using MVC components
   Scenario: Should have a controller class for the MVC endpoints
     Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
     And   The "saveCustomer:Customer" method of the class is annotated by "PutMapping" with parameter "value" set to "/customer"
-    And   I have mocked save function to trap its input
+    And   I have mocked save function to just return its input
     When  I call saveCustomer on "customerController" bean with "customerOne"
     Then  I can verify the save function was called with "customerOne"
+
+  @MvcRestful
+  Scenario: Should reject call to save customer if not authenticated
+    Given I have mocked save function to just return its input
+    And   I "PUT" the "/customer" with "customerOne" and no authentication
+    Then  I recieve a "403" response status

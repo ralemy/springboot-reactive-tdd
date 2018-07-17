@@ -116,14 +116,19 @@ it is reached.
   @MvcRestful
   Scenario: Should have a controller class for the MVC endpoints
     Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
-    And   
-    Then  the "RestController" annotation exists in the class annotations
-    And   The class has the following properties: "customerRepository"
-    And   The "customerRepository" field is of type "CustomerRepository"
-    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
+    And   The "saveCustomer:Customer" method of the class is annotated by "PutMapping" with parameter "value" set to "/customer"
+    And   I have mocked save function to trap its input
+    When  I call saveCustomer on "customerController" bean with "customerOne"
+    Then  I can verify the save function was called with "customerOne"
+```
+Then we check that if we try to connect to it without authentication,
+it will fail.
+
+```gherkin
+Scenario: should reject call to save customer if not authenticated
+    
 
 ```
-
 
 
 

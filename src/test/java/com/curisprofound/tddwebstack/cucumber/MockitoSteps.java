@@ -146,12 +146,6 @@ public class MockitoSteps extends StepsBase {
         Add(Customer.class, newCustomer(arg0));
     }
 
-    @And("^I have mocked save function to trap its input$")
-    public void iHaveMockedSaveFunctionToTrapItsInput() throws Throwable {
-        doAnswer((Answer<Customer>) invocationOnMock -> (Customer) invocationOnMock.getArguments()[0])
-                .when(customerRepository).save(any(Customer.class));
-    }
-
     @When("^I save it to customer repository$")
     public void iSaveItToCustomerRepository() throws Throwable {
         Customer c = customerRepository.save(Get(Customer.class));
@@ -261,5 +255,11 @@ public class MockitoSteps extends StepsBase {
                 arg0,
                 Get(Customer.class).getId()
         );
+    }
+
+    @And("^I have mocked save function to just return its input$")
+    public void iHaveMockedSaveFunctionToJustReturnItsInput() throws Throwable {
+        doAnswer((Answer<Customer>) invocationOnMock -> (Customer) invocationOnMock.getArguments()[0])
+                .when(customerRepository).save(any(Customer.class));
     }
 }

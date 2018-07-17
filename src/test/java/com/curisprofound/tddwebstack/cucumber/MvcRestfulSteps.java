@@ -78,4 +78,16 @@ public class MvcRestfulSteps extends StepsBase{
         Add(Customer.class, newCustomer(arg1));
         ((CustomerController) getBean(arg0)).saveCustomer(Get(Customer.class));
     }
+
+    @And("^I \"([^\"]*)\" the \"([^\"]*)\" with \"([^\"]*)\" and no authentication$")
+    public void iTheWithAndNoAuthentication(String arg0, String arg1, String arg2) throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
+    }
+
+    @Then("^I recieve a \"([^\"]*)\" response status$")
+    public void iRecieveAResponseStatus(String arg0) throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
+    }
 }

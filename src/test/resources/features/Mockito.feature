@@ -63,7 +63,7 @@ Feature: I need MVC based controllers
   @Mockito
   Scenario: Should be able to capture the input of the mock
     Given I have a customer object by name of "customer1"
-    And   I have mocked save function to trap its input
+    And   I have mocked save function to just return its input
     When  I save it to customer repository
     Then  I can verify the save function was called with "customer1"
 
