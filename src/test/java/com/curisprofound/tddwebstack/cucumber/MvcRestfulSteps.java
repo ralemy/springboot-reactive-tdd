@@ -71,4 +71,10 @@ public class MvcRestfulSteps extends StepsBase{
                 customers.get(0).getName()
         );
     }
+
+    @When("^I call saveCustomer on \"([^\"]*)\" bean with \"([^\"]*)\"$")
+    public void iCallSaveCustomerOnBeanWith(String arg0, String arg1) throws Throwable {
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
+    }
 }
