@@ -7,19 +7,19 @@ application using TDD methodology with Spring Boot.
 
 The current status of the project follows:
 
-| Technique Demonstrated | Stack Position | Tag ID|
-|------------------------|--------|----------|
-|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Foundation|[Cucumber](../../tree/step01.Cucumber)|
-|[H2 repositories for production and test](docs/hibernate.jpa.md)| Backend |[Hibernate](../../tree/step02.hibernateh2)|
-|[Use of Mockito in Cucumber unit tests](docs/mockito.md)| Foundation|[Mockito](../../tree/step04.mockito)|
-|[MongoDB reactive repositories for production and test](docs/mongo.md)|Backend|[Mongo](../../tree/step03.reactivemongo)|
-|[MVC Restful service](docs/mvc.md)|Middleware|[SpringMVC](../../tree/step05.spring.mvc)|
-|Reactive Restful Service|Middleware|Not Applicable|
-|Akka Actor Sytem|Middleware|Not Applicable|
-|Reactive Web Socket implementation|Middleware|Not Applicable|
-|Server Side Events| Middleware|Not Applicable|
-|Angular integration with MVC services | Frontend | Not Applicable|
-|Angular integration with reactive streaming | Frontend | Not Applicable|
+| Technique Demonstrated | Stack Position | Technology Focus| iteration|
+|------------------------|--------|----------|------|
+|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Foundation|[Cucumber](../../tree/step01.Cucumber)|01|
+|[H2 repositories for production and test](docs/hibernate.jpa.md)| Backend |[Hibernate](../../tree/step02.hibernateh2)|01|
+|[Use of Mockito in Cucumber unit tests](docs/mockito.md)| Foundation|[Mockito](../../tree/step04.mockito)|01|
+|[MongoDB reactive repositories for production and test](docs/mongo.md)|Backend|[Mongo](../../tree/step03.reactivemongo)|01|
+|[MVC Restful service](docs/mvc.md)|Middleware|[SpringMVC](../../tree/step05.spring.mvc)|01|
+|Reactive Restful Service|Middleware|Not Applicable|00|
+|Akka Actor Sytem|Middleware|Not Applicable|00|
+|Reactive Web Socket implementation|Middleware|Not Applicable|00|
+|Server Side Events| Middleware|Not Applicable|00|
+|Angular integration with MVC services | Frontend | Not Applicable| 00|
+|Angular integration with reactive streaming | Frontend | Not Applicable|00|
 
 
 # Development Protocol
