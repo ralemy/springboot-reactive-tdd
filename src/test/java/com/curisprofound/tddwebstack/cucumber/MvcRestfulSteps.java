@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,14 +44,14 @@ public class MvcRestfulSteps extends StepsBase{
     @When("^I \"([^\"]*)\" the \"([^\"]*)\" endpoint$")
     public void iTheEndpoint(String arg0, String arg1) throws Throwable {
         ResultActions result = Get(MockMvc.class).perform(
-                get("/customers")
+                get("/customers").with(csrf().useInvalidToken())
         )
                 .andExpect(status().isOk());
         Add(ResultActions.class, result);
     }
 
     @Then("^I get a list of Customer objects with one member by the name of \"([^\"]*)\"$")
-    public void iGetAListOfCustomerObjectsWithOneMemberByTheNameOf(String arg0) throws Throwable {
+    public void iGetAListOfCustomerObjectsWithOneMemberByTheNameOf(String expectedName) throws Throwable {
         String resp = Get(ResultActions.class).andReturn().getResponse().getContentAsString();
         List<Customer> customers = jsonStringToClassArray(resp,Customer.class);
         assertEquals(
@@ -58,7 +59,7 @@ public class MvcRestfulSteps extends StepsBase{
                 customers.size()
         );
         assertEquals(
-                arg0,
+                expectedName,
                 customers.get(0).getName()
         );
     }
