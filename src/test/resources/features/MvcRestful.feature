@@ -43,4 +43,6 @@ Feature: I need restful interfaces using MVC components
     Given I have mocked save function to just return its input
     And   I have a user "usr1" and password "pass1" configured
     When  I "PUT" the "/customer" with "customerOne" with such credentials
-    Then  I receive a 403 response status
+    Then  I receive a 200 response status
+    And   I can verify the save function was called with "customerOne"
+    And   The endpoint returns a customer object named "customerOne"

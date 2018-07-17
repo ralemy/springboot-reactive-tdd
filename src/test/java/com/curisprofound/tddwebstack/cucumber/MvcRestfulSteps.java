@@ -130,4 +130,10 @@ public class MvcRestfulSteps extends StepsBase{
         );
         Add(ResultActions.class, result);
     }
+
+    @And("^The endpoint returns a customer object named \"([^\"]*)\"$")
+    public void theEndpointReturnsACustomerObjectNamed(String arg0) throws Throwable {
+        String resp = Get(ResultActions.class).andReturn().getResponse().getContentAsString();
+//        assertEquals();
+    }
 }
