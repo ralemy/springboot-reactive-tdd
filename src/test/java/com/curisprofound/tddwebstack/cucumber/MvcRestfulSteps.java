@@ -1,6 +1,7 @@
 package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
+import com.curisprofound.tddwebstack.controllers.CustomerController;
 import com.curisprofound.tddwebstack.db.Customer;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
@@ -74,7 +75,7 @@ public class MvcRestfulSteps extends StepsBase{
 
     @When("^I call saveCustomer on \"([^\"]*)\" bean with \"([^\"]*)\"$")
     public void iCallSaveCustomerOnBeanWith(String arg0, String arg1) throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        Add(Customer.class, newCustomer(arg1));
+        ((CustomerController) getBean(arg0)).saveCustomer(Get(Customer.class));
     }
 }

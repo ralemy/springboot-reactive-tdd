@@ -132,4 +132,16 @@ public class StepsBase {
         return null;
     }
 
+    protected Customer newCustomer(String name) {
+        Customer c = new Customer();
+        c.setName(name);
+        return c;
+    }
+    protected Customer newCustomer(Long id) {
+        Customer c = new Customer();
+        c.setId(id);
+        return c;
+    }
+
+
 }

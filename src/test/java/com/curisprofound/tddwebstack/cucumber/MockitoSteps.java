@@ -51,16 +51,6 @@ public class MockitoSteps extends StepsBase {
     @Autowired
     private CustomerRepository customerRepository;
 
-    private Customer newCustomer(String name) {
-        Customer c = new Customer();
-        c.setName(name);
-        return c;
-    }
-    private Customer newCustomer(Long id) {
-        Customer c = new Customer();
-        c.setId(id);
-        return c;
-    }
 
     @Before("@Mockito")
     public void beforeMockito() {
