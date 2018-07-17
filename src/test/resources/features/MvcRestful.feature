@@ -25,7 +25,7 @@ Feature: I need restful interfaces using MVC components
     Then    I get a list of Customer objects with one member by the name of "customerOne"
 
   @MvcRestful
-  Scenario: Should have a controller class for the MVC endpoints
+  Scenario: Should have a save customer in controller class for the MVC endpoints
     Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
     And   The "saveCustomer:Customer" method of the class is annotated by "PutMapping" with parameter "value" set to "/customer"
     And   I have mocked save function to just return its input
@@ -36,4 +36,4 @@ Feature: I need restful interfaces using MVC components
   Scenario: Should reject call to save customer if not authenticated
     Given I have mocked save function to just return its input
     And   I "PUT" the "/customer" with "customerOne" and no authentication
-    Then  I recieve a "403" response status
+    Then  I recieve a 403 response status

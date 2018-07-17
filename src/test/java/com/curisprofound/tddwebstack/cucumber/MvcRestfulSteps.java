@@ -9,6 +9,7 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -19,6 +20,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +55,7 @@ public class MvcRestfulSteps extends StepsBase{
     @When("^I \"([^\"]*)\" the \"([^\"]*)\" endpoint$")
     public void iTheEndpoint(String arg0, String arg1) throws Throwable {
         ResultActions result = Get(MockMvc.class).perform(
-                get("/customers").with(csrf().useInvalidToken())
+                get(arg1)
         )
                 .andExpect(status().isOk());
         Add(ResultActions.class, result);
@@ -81,13 +83,18 @@ public class MvcRestfulSteps extends StepsBase{
 
     @And("^I \"([^\"]*)\" the \"([^\"]*)\" with \"([^\"]*)\" and no authentication$")
     public void iTheWithAndNoAuthentication(String arg0, String arg1, String arg2) throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        Add(Customer.class, newCustomer(arg2));
+
+        ResultActions result = Get(MockMvc.class).perform(
+                put(arg1).contentType(MediaType.APPLICATION_JSON)
+                .content(jsonObjectToString(Get(Customer.class)))
+        );
+        Add(ResultActions.class, result);
+
     }
 
-    @Then("^I recieve a \"([^\"]*)\" response status$")
-    public void iRecieveAResponseStatus(String arg0) throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+    @Then("^I recieve a (\\d+) response status$")
+    public void iRecieveAResponseStatus(int arg0) throws Throwable {
+        Get(ResultActions.class).andExpect(status().is(arg0));
     }
 }

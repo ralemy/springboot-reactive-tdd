@@ -81,6 +81,9 @@ public class StepsBase {
                 typeFactory.constructCollectionType(List.class, clazz));
 
     }
+    protected String jsonObjectToString(Object content) throws IOException {
+        return objectMapper.writeValueAsString(content);
+    }
 
     public <T> T Get(Class<T> clazz, String key) {
         return world.Get(clazz, key);
