@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.reset;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,6 +46,7 @@ public class MvcRestfulSteps extends StepsBase{
 
     @After("@MvcRestful")
     public void afterMvcResult() {
+        reset(customerRepository);
         tearDown();
     }
 
@@ -138,9 +140,10 @@ public class MvcRestfulSteps extends StepsBase{
     @And("^The endpoint returns a customer object named \"([^\"]*)\"$")
     public void theEndpointReturnsACustomerObjectNamed(String arg0) throws Throwable {
         String resp = Get(ResultActions.class).andReturn().getResponse().getContentAsString();
+        Customer customer = jsonStringToObject(resp, Customer.class);
         assertEquals(
-                "failme",
-                resp
+                arg0,
+                customer.getName()
         );
     }
 }

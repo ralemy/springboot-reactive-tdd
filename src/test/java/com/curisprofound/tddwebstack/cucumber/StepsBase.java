@@ -84,6 +84,9 @@ public class StepsBase {
     protected String jsonObjectToString(Object content) throws IOException {
         return objectMapper.writeValueAsString(content);
     }
+    protected <T> T jsonStringToObject(String content , Class<T> clazz) throws IOException {
+        return objectMapper.readValue(content,clazz);
+    }
 
     public <T> T Get(Class<T> clazz, String key) {
         return world.Get(clazz, key);
