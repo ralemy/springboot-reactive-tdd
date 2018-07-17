@@ -23,7 +23,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -145,5 +148,10 @@ public class MvcRestfulSteps extends StepsBase{
                 arg0,
                 customer.getName()
         );
+    }
+
+    @And("^I can verify the save function was not called$")
+    public void iCanVerifyTheSaveFunctionWasNotCalled() throws Throwable {
+        verify(customerRepository,never()).save(any(Customer.class));
     }
 }

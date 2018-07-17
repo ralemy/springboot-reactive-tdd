@@ -37,6 +37,7 @@ Feature: I need restful interfaces using MVC components
     Given I have mocked save function to just return its input
     When   I "PUT" the "/customer" with "customerOne" and no authentication
     Then  I receive a 403 response status
+    And   I can verify the save function was not called
 
   @MvcRestful
   Scenario: Should accept call to save customer if authenticated
