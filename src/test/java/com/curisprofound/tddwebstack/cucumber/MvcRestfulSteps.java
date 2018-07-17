@@ -3,6 +3,7 @@ package com.curisprofound.tddwebstack.cucumber;
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
 import com.curisprofound.tddwebstack.controllers.CustomerController;
 import com.curisprofound.tddwebstack.db.Customer;
+import com.curisprofound.tddwebstack.db.CustomerRepository;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
@@ -33,6 +34,9 @@ public class MvcRestfulSteps extends StepsBase{
 
     @Autowired
     private AuthenticationManagerBuilder authManagerBuilder;
+
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Before("@MvcRestful")
     public void beforeMvcRestful() {
@@ -134,6 +138,9 @@ public class MvcRestfulSteps extends StepsBase{
     @And("^The endpoint returns a customer object named \"([^\"]*)\"$")
     public void theEndpointReturnsACustomerObjectNamed(String arg0) throws Throwable {
         String resp = Get(ResultActions.class).andReturn().getResponse().getContentAsString();
-//        assertEquals();
+        assertEquals(
+                "failme",
+                resp
+        );
     }
 }
