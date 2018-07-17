@@ -23,3 +23,8 @@ Feature: I need restful interfaces using MVC components
     Given   the findAll method is masked to return a customer named "customerOne"
     When    I "GET" the "/customers" endpoint
     Then    I get a list of Customer objects with one member by the name of "customerOne"
+
+  @MvcRestful
+  Scenario: Should have a controller class for the MVC endpoints
+    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
+    And   The "saveCustomer:Customer" method of the class is annotated by "PutMapping" with parameter "value" set to "/customer"

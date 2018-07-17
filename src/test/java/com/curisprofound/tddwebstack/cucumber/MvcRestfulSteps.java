@@ -11,7 +11,9 @@ import cucumber.api.java.en.When;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -34,9 +36,15 @@ public class MvcRestfulSteps extends StepsBase{
 
     @And("^The \"([^\"]*)\" method of the class is annotated by \"([^\"]*)\" with parameter \"([^\"]*)\" set to \"([^\"]*)\"$")
     public void theMethodOfTheClassIsAnnotatedByWithParameterSetTo(String method, String annotation, String pname, String pvalue) throws Throwable {
+        String methodName = method.contains(":") ? method.split(":")[0].trim() : method;
+        Class<?>[] methodArgs = method.contains(":") ?
+                Arrays.stream(method.split(":")[1].split(","))
+                .map(String::trim)
+                .map(this::getClassFromKey)
+                .toArray(Class<?>[]::new) : new Class<?>[0];
         AssertOnClass
                 .For(Get("ClassName"))
-                .Method(method)
+                .Method(methodName, methodArgs)
                 .Annotation(annotation)
                 .paramHasValue(pname, pvalue);
     }

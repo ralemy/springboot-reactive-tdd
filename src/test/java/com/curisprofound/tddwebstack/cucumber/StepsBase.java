@@ -125,6 +125,8 @@ public class StepsBase {
             return Object.class;
         if(type.equalsIgnoreCase("Class"))
             return Class.class;
+        if(type.equalsIgnoreCase("Customer"))
+            return Customer.class;
 
         Assert.fail("Unknown Type: " + type );
         return null;

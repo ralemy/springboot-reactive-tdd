@@ -1,5 +1,26 @@
 # Implementing Restful services with MVC
 
+## Open endpoints, not requiring authentication
+
+We will discuss security in the next chapters,for now let's open an endpoint to waive authentication
+requirements. edit the WebSecurityConfig file:
+
+```java
+@Configuration
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+                .antMatchers("/h2/**").permitAll()
+                .antMatchers("/customers").permitAll()
+                .anyRequest().authenticated()
+                .and().logout().permitAll();
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
+    }
+}
+```
+
 The first step is to have a RestController object which has mappings for end point. for CRUD services, 
 We can test for that:
 
@@ -75,6 +96,35 @@ The same technique is used for DELETE, POST, and PUT. basically we mock the repo
 to control the responses and prevent actual changes in database, then we call the endpoints on the
 controller and check to see how the customerRepository is affected and what is returned to the 
 client.
+
+
+## TDD of authenticated endpoints
+
+The WebSecurityConfig object is controlling the authentication requirements of the endpoints.
+at this time, it is allowing "/customer" and "/h2/**", and asking everything else to be authenticated.
+Theoretically, it is possible to unit test this class and check the ```FilterChain``` objects to ensure
+correct configuration, but this is a lot of work and has huge dependency on the underlying mechanisms
+of Spring boot and can change in the future without notice, so it is [not considered the best practice](https://stackoverflow.com/questions/43663688/spring-security-httpsecurity-configuration-testing).
+
+In this case it is easier to lean towards integration testing, just ensuring that the
+call will fail and pass properly without and with authentication.
+
+So, let's first check we have an endpoint configured that would behave correctly if 
+it is reached. 
+
+```gherkin
+  @MvcRestful
+  Scenario: Should have a controller class for the MVC endpoints
+    Given There exists a class named "CustomerController" in "com.curisprofound.tddwebstack.controllers" package
+    And   
+    Then  the "RestController" annotation exists in the class annotations
+    And   The class has the following properties: "customerRepository"
+    And   The "customerRepository" field is of type "CustomerRepository"
+    And   The "getAllCustomers" method of the class is annotated by "GetMapping" with parameter "value" set to "/customers"
+
+```
+
+
 
 
 
