@@ -20,3 +20,17 @@ Feature: As a developer
     When  I enter a new Scenario
     Then  The World variable "p1" should be null
 
+
+  @CucumberSanity
+  Scenario: Should be able to correctly interpret method signatures
+    Given I have a signature of "Map<String, Class<?> >, Object, java.util.HashSet<String>"
+    When  I parse the signature into an object
+    Then  I will get a correct presentation of parameters
+
+
+  @CucumberSanity
+  Scenario: Should be able to identify imbalanced
+    Given I have a signature of "Map<String,Class<?>, Object, java.util.HashSet<String>"
+    Then  I will get an assertion fail on parsing the string: "missing `>`: "
+    Given I have a signature of "Map String,Class<?>>, Object, java.util.HashSet<String>"
+    Then  I will get an assertion fail on parsing the string: "missing `<`: "
