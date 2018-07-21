@@ -9,7 +9,7 @@ The current status of the project follows:
 
 | Technique Demonstrated | Stack Position | Technology Focus| iteration|
 |------------------------|--------|----------|------|
-|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Foundation|[Cucumber](../../tree/step01.Cucumber)|01|
+|[Use of Cucumber for TDD in addition to integration tests](docs/cucumber.md)| Foundation|[Cucumber](../../tree/step01.Cucumber.02)|02|
 |[H2 repositories for production and test](docs/hibernate.jpa.md)| Backend |[Hibernate](../../tree/step02.hibernateh2)|01|
 |[Use of Mockito in Cucumber unit tests](docs/mockito.md)| Foundation|[Mockito](../../tree/step04.mockito)|01|
 |[MongoDB reactive repositories for production and test](docs/mongo.md)|Backend|[Mongo](../../tree/step03.reactivemongo)|01|
