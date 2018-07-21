@@ -14,6 +14,7 @@ The current status of the project follows:
 |[Use of Mockito in Cucumber unit tests](docs/mockito.md)| Foundation|[Mockito](../../tree/step04.mockito)|01|
 |[MongoDB reactive repositories for production and test](docs/mongo.md)|Backend|[Mongo](../../tree/step03.reactivemongo)|01|
 |[MVC Restful service](docs/mvc.md)|Middleware|[SpringMVC](../../tree/step05.spring.mvc)|01|
+|[Plugin Support with Spring](docs/plugins.md)|Middleware|In Progress|--|
 |Reactive Restful Service|Middleware|Not Applicable|00|
 |Akka Actor Sytem|Middleware|Not Applicable|00|
 |Reactive Web Socket implementation|Middleware|Not Applicable|00|
