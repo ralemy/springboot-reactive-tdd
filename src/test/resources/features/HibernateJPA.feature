@@ -77,14 +77,6 @@ Feature: I need an ORM to deal with data persistence
 
 
   @HibernateJPA
-  Scenario: the test system should be able to say if a class member is accessible
-    Given There exists a class named "TestMe" in "com.curisprofound.tddwebstack.db" package
-    And   The class has the following properties: "privateField, publicField, getterField"
-    Then  "publicField" is readable
-    And   "getterField" is readable
-    And   "privateField" is not readable
-
-  @HibernateJPA
   Scenario: Should have an Invoice class annotated as an entity
     Given There exists a class named "Invoice" in "com.curisprofound.tddwebstack.db" package
     And   The class has the following properties: "date, place, customer"

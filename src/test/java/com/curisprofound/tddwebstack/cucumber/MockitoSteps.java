@@ -1,10 +1,8 @@
 package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.assertions.AssertOnClass;
-import com.curisprofound.tddwebstack.controllers.CustomerController;
-import com.curisprofound.tddwebstack.db.Address;
-import com.curisprofound.tddwebstack.db.Customer;
-import com.curisprofound.tddwebstack.db.CustomerRepository;
+import com.curisprofound.tddwebstack.assertions.TypeDef;
+import com.curisprofound.tddwebstack.db.*;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
@@ -13,30 +11,11 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.junit.Assert;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnit;
 import org.mockito.stubbing.Answer;
-import org.springframework.aop.target.HotSwappableTargetSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.TestExecutionListeners;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -160,6 +139,7 @@ public class MockitoSteps extends StepsBase {
         verify(customerRepository).save(Get(Customer.class));
     }
 
+
     @And("^The class has a method \"([^\"]*)\" with parameters \"([^\"]*)\"$")
     public void theClassHasAMethodWithParameters(String arg0, String arg1) throws Throwable {
         Class<?>[] types = Arrays.stream(arg1.split(","))
@@ -184,7 +164,7 @@ public class MockitoSteps extends StepsBase {
 
     @When("^I call the post-processor with a general object$")
     public void iCallThePostProcessorWithAGeneralObject() throws Throwable {
-        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Object(),"");
+        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Object(), "");
         Add(Object.class, result, "postProcessorResult");
     }
 
@@ -203,7 +183,7 @@ public class MockitoSteps extends StepsBase {
 
     @When("^I call the post-processor with a an instance of that class$")
     public void iCallThePostProcessorWithAAnInstanceOfThatClass() throws Throwable {
-        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Address(),"");
+        Object result = Get(MockPostProcessor.class).postProcessAfterInitialization(new Address(), "");
         Add(Object.class, result, "postProcessorResult");
     }
 
@@ -244,7 +224,7 @@ public class MockitoSteps extends StepsBase {
 
     @Given("^I have mocked customerRepository FindbyId to return a customer with id plus (\\d+)$")
     public void iHaveMockedCustomerRepositoryFindbyIdToReturnACustomerWithIdPlus(int arg0) throws Throwable {
-        doAnswer(input -> Optional.of(newCustomer(10 + (Long)input.getArguments()[0])))
+        doAnswer(input -> Optional.of(newCustomer(10 + (Long) input.getArguments()[0])))
                 .when(customerRepository)
                 .findById(any(Long.class));
     }
@@ -262,4 +242,58 @@ public class MockitoSteps extends StepsBase {
         doAnswer((Answer<Customer>) invocationOnMock -> (Customer) invocationOnMock.getArguments()[0])
                 .when(customerRepository).save(any(Customer.class));
     }
+
+    @And("^The class has a method \"([^\"]*)\" with parameters \"([^\"]*)\" and return Type \"([^\"]*)\"$")
+    public void theClassHasAMethodWithParametersAndReturnType(String method, String parameters, String returnType) throws Throwable {
+
+        // Write code here that turns the phrase above into concrete actions
+        throw new PendingException();
+    }
+
+    @Given("^I have a signature of \"([^\"]*)\"$")
+    public void iHaveASignatureOf(String arg0) throws Throwable {
+        Add(String.class, arg0, "signature");
+        TypeDef.setClassNames();
+    }
+
+    @When("^I parse the signature into an object$")
+    public void iParseTheSignatureIntoAnObject() throws Throwable {
+        Add(List.class, TypeDef.parse(Get("signature")), "params");
+    }
+
+    @Then("^I will get a correct presentation of parameters$")
+    public void iWillGetACorrectPresentationOfParameters() throws Throwable {
+        List<TypeDef> params = Get(List.class, "params");
+        assertEquals(
+                3,
+                params.size()
+        );
+        assertEquals(
+                Map.class,
+                params.get(0).parameterClass
+        );
+        assertEquals(
+                Class.class,
+                params.get(0).genericTypes.get(1).parameterClass
+        );
+        assertEquals(
+                Class.class,
+                params.get(0).genericTypes.get(1).genericTypes.get(0).parameterClass
+        );
+    }
+
+
+    @Then("^I will get an assertion fail on parsing the string: \"([^\"]*)\"$")
+    public void iWillGetAnAssertionFailOnParsingTheString(String arg0) throws Throwable {
+        try {
+            TypeDef.parse(Get("signature"));
+            Assert.fail("Did not notice a problem with signature string");
+        } catch (Exception e) {
+            assertEquals(
+                    arg0 + Get("signature"),
+                    e.getMessage()
+            );
+        }
+    }
+
 }
