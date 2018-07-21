@@ -1,22 +1,23 @@
 package com.curisprofound.tddwebstack.cucumber;
 
-import com.curisprofound.tddwebstack.db.CustomerRepository;
+import com.curisprofound.tddwebstack.assertions.AssertOnClass;
+import com.curisprofound.tddwebstack.assertions.TypeDef;
 import cucumber.api.PendingException;
 import cucumber.api.java.After;
-import cucumber.api.java.Before;
+import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class CucumberSanitySteps  extends StepsBase{
+public class CucumberSanitySteps extends StepsBase {
 
 
     @After("@CucumberSanity")
-    public void afterCucumberSanity(){
+    public void afterCucumberSanity() {
         tearDown();
     }
 
@@ -29,8 +30,8 @@ public class CucumberSanitySteps  extends StepsBase{
 
     @When("^I add \"([^\"]*)\" and \"([^\"]*)\" and store the result in \"([^\"]*)\"$")
     public void iAddAndAndStoreTheResultIn(String p1, String p2, String p3) throws Throwable {
-       int k =  Get(Integer.class , p1) + Get(Integer.class, p2);
-       Add(Integer.class, k, p3);
+        int k = Get(Integer.class, p1) + Get(Integer.class, p2);
+        Add(Integer.class, k, p3);
     }
 
     @Then("^The World variable \"([^\"]*)\" should be equal to (\\d+)$")
@@ -40,4 +41,47 @@ public class CucumberSanitySteps  extends StepsBase{
                 Get(Integer.class, p3).intValue()
         );
     }
+
+    @Then("^Class has a field \"([^\"]*)\" of Type \"([^\"]*)\"$")
+    public void classHasAFieldOfType(String fieldName, String signature) throws Throwable {
+        AssertOnClass.For(Get("ClassName"))
+                .Field(fieldName)
+                .isOfComplexType(TypeDef.parse(signature).get(0));
+    }
+
+    @Then("^The class has a method with signature \"([^\"]*)\"$")
+    public void theClassHasAMethodWithSignatureListString(String methodSignature) throws Throwable {
+        String returnValue = methodSignature.split(":")[1].trim();
+        String methodName = methodSignature.split("\\(")[0].trim();
+        String params = methodSignature.split("\\(")[1].split("\\)")[0].trim();
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Method(methodName, TypeDef.parse(params))
+                .hasReturnType(TypeDef.parse(returnValue).get(0));
+
+    }
+
+    @And("^the parameters for \"([^\"]*)\" are not \"([^\"]*)\"$")
+    public void theParametersForAreNot(String methodName, String params) throws Throwable {
+        List<TypeDef> parsedParams = TypeDef.parse(params);
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Methods(methodName)
+                .forEach(method->method.Not().hasArguments(parsedParams));
+    }
+
+    @Given("^There exists a class named \"([^\"]*)\" in \"([^\"]*)\" package$")
+    public void thereExistsAClassNamedInPackage(String className, String packageName) throws Throwable {
+        String fullName = packageName + "." + className;
+        Class.forName(fullName);
+        Add(String.class, fullName, "ClassName");
+    }
+
+    @Then("^the \"([^\"]*)\" annotation exists in the class annotations$")
+    public void theAnnotationExistsInTheClassAnnotations(String annotationName) throws Throwable {
+        AssertOnClass
+                .For(Get("ClassName"))
+                .hasAnnotations(annotationName);
+    }
+
 }

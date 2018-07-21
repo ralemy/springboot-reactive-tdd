@@ -28,12 +28,6 @@ public class HibernateJPASteps extends StepsBase {
 
 
 
-    @Then("^the \"([^\"]*)\" annotation exists in the class annotations$")
-    public void theAnnotationExistsInTheClassAnnotations(String arg0) throws Throwable {
-        AssertOnClass
-                .For(Get("ClassName"))
-                .hasAnnotations(arg0);
-    }
 
     @Then("^The class has a getter for property \"([^\"]*)\"$")
     public void theClassHasAGetterForProperty(String propertyName) throws Throwable {
@@ -161,11 +155,5 @@ public class HibernateJPASteps extends StepsBase {
                 .isOfType(getClassFromKey(arg1));
     }
 
-    @Given("^There exists a class named \"([^\"]*)\" in \"([^\"]*)\" package$")
-    public void thereExistsAClassNamedInPackage(String className, String packageName) throws Throwable {
-        String fullName = packageName + "." + className;
-        Class.forName(fullName);
-        Add(String.class, fullName, "ClassName");
-    }
 }
 

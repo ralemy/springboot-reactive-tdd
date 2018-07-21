@@ -1,23 +1,23 @@
 package com.curisprofound.tddwebstack.cucumber;
 
 import com.curisprofound.tddwebstack.TddWebStackApplication;
+import com.curisprofound.tddwebstack.assertions.TypeDef;
 import com.curisprofound.tddwebstack.db.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.restdocs.ManualRestDocumentation;
-import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import javax.servlet.Filter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
@@ -44,6 +44,23 @@ public class StepsBase {
         objectMapper = new ObjectMapper();
         typeFactory = objectMapper.getTypeFactory();
         shouldCallAfterTest = false;
+        addClassNames();
+    }
+
+    private void addClassNames() {
+        Map<String, Class<?>> classNames = new HashMap<>();
+
+        TypeDef.setClassNames();
+
+        classNames.put("Address", Address.class);
+        classNames.put("Invoice", Invoice.class);
+        classNames.put("Product", Product.class);
+        classNames.put("Author", Author.class);
+        classNames.put("Publisher", Publisher.class);
+        classNames.put("CustomerRepository", CustomerRepository.class);
+        classNames.put("Customer", Customer.class);
+
+        TypeDef.addClassNames(classNames);
     }
 
     public void mockMvc(Class testClass, String testMethod) {
@@ -113,29 +130,7 @@ public class StepsBase {
     }
 
     public Class<?> getClassFromKey(String type) {
-        if (type.equalsIgnoreCase("String"))
-            return String.class;
-        if (type.equalsIgnoreCase("Address"))
-            return Address.class;
-        if(type.equalsIgnoreCase("Invoice"))
-            return Invoice.class;
-        if(type.equalsIgnoreCase("Product"))
-            return Product.class;
-        if(type.equalsIgnoreCase("Author"))
-            return Author.class;
-        if(type.equalsIgnoreCase("Publisher"))
-            return Publisher.class;
-        if(type.equalsIgnoreCase("CustomerRepository"))
-            return CustomerRepository.class;
-        if(type.equalsIgnoreCase("Object"))
-            return Object.class;
-        if(type.equalsIgnoreCase("Class"))
-            return Class.class;
-        if(type.equalsIgnoreCase("Customer"))
-            return Customer.class;
-
-        Assert.fail("Unknown Type: " + type );
-        return null;
+        return TypeDef.nameToClass(type);
     }
 
     protected Customer newCustomer(String name) {
