@@ -343,6 +343,91 @@ public class CucumberSantiySteps01 extends StepsBase{
 }
 ```
 
+# Asserting Classes
+
+The universal first step in TDD methodology is to write the test Before writing the code. Since everything
+in Java is a class, work usually begins with creating a class, so the first test is for existence of 
+the class:
+
+```gherkin
+    Given There exists a class named "TestMe" in "com.curisprofound.tddwebstack" package
+``` 
+
+Once the class is created, there needs to be tests to assert a variety of conditions, such as 
+existence of fields and methods with certain names, certain method with certain parameters and 
+return values, certain annotaions on fields, methods, classes, etc. Also, keep in mind that there
+is more often than not a need to negate a test, for example chekcing that a method does not exist or
+a field is not of certain type. 
+
+Obviously, the way to write all these tests is through Reflection in Java. However, reflection usually
+requires a lot of boilerplate code and casting, so we have encapsulated such tests under the 
+```AssertOnClass``` object.
+
+The AssertOnClass object creates a chain of tests. for example, the above condition is implemented as
+
+```java
+String fullName = packageName + "." + className;
+AssertOnClass
+    .For(fullName);
+Add(String.class, fullName, "ClassName");
+```
+
+The full class name is added to the World object so that it can be used in next steps. for example if the 
+scenario continues with the following test:
+
+```gherkin
+And the class has a field called "publicField"
+```
+
+then we can get the classname from the world object:
+
+```java
+AssertOnClass
+    .For(Get("ClassName"))
+    .Field(fieldName);
+```
+
+## Method Signatures
+
+testing that there exists a method under a specific name which accepts certain set of parameters and 
+returns a certain type of object is another popular requirement. imagine another step:
+
+```gherkin
+    Then  The class has a method with signature "myMethod(Map<String,List<Class<? extends RuntimeException>>>, Object, List<String>):List<String>"
+```
+
+This is a shortcut to check everything in one step. the format should be similar to Typescript definitions:
+
+     nameofMethod ( parameters of method) : return type of method
+
+here is who it is implemented:
+
+```java
+        String returnValue = methodSignature.split(":")[1].trim();
+        String methodName = methodSignature.split("\\(")[0].trim();
+        String params = methodSignature.split("\\(")[1].split("\\)")[0].trim();
+        AssertOnClass
+                .For(Get("ClassName"))
+                .Method(methodName, TypeDef.parse(params))
+                .hasReturnType(TypeDef.parse(returnValue).get(0));
+```
+
+## More examples
+
+The cucumberSanity.feature file in src/test/resources/features has examples of complex types and annotation
+checking and other tests.
+
+
+# Future Direction
+
+There are many things that can be tested with reflection. which exceptions are thrown by a method, 
+which annotations are placed on the parameters of a method, class superclass and implemented interfaces, 
+etc.
+
+As we encounter these tests we add them the AssertOnClass branches to be reused when encountered again.
+
+
+
 
 
 
